@@ -1,0 +1,41 @@
+{
+  "name": "Template Extension",
+  "short_name": "itextension",
+  "description": "this is a template extension",
+  "author": "Unknown",
+  "version": "0.1.0",
+  "manifest_version": 2,
+  "permissions": [
+    "storage",
+    "tabs",
+    "notifications",
+    "background",
+    "webRequest",
+    "<all_urls>"
+  ],
+  "web_accessible_resources": [],
+  "browser_action": {
+    "default_icon": {
+      "19": "data/icons/19.png",
+      "38": "data/icons/38.png"
+    },
+    "default_popup": "data/popup/index.html"
+  },
+  "background": {
+    "page": "lib/chrome/background.html"
+  },
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["data/content_script/chrome/chrome.js", "data/content_script/inject.js"],
+    "css": ["data/content_script/inject.css"],
+    "run_at": "document_start",
+    "all_frames": false
+  }],
+  "options_page": "data/options/index.html",
+  "homepage_url": "http://add0n.com/index.html",
+  "icons": {
+    "16": "data/icons/16.png",
+    "48": "data/icons/48.png",
+    "128": "data/icons/128.png"
+  }
+}

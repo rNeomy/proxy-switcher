@@ -1,0 +1,73 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="fontello.css">
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <table id="tabs">
+      <tr>
+        <td><label><input type="radio" name="proxy" value="0"><span class="icon-">No proxy</span></label></td>
+        <td><label><input type="radio" name="proxy" value="1"><span class="icon-">Auto-detect proxy</span></label></td>
+        <td><label><input type="radio" name="proxy" value="2"><span class="icon-">System proxy</span></label></td>
+        <td><label><input type="radio" name="proxy" value="3"><span class="icon-">Manual</span></label></td>
+      </tr>
+    </table>
+    <table id="socks" data-type='global'>
+      <tr>
+        <td colspan="3">
+          <label><input type="radio" name="profile" value="0"><span>Profile 1</span></label> •
+          <label><input type="radio" name="profile" value="1"><span>Profile 2</span></label> •
+          <label><input type="radio" name="profile" value="2"><span>Profile 3</span></label> •
+          <label><input type="radio" name="profile" value="3"><span>Profile 4</span></label> •
+          <label><input type="radio" name="profile" value="4"><span>Profile 5</span></label> •
+          <label><input type="radio" name="profile" value="5"><span>Profile 6</span></label>
+        </td>
+        <td align="right"><a href="#" data-cmd="edit-profiles">Edit</a></td>
+      </tr>
+      <tr>
+        <td>HTTP Proxy:</td>
+        <td><input type="text" id="http-host" placeholder="0.0.0.0" data-pref="network.proxy.http"></td>
+        <td>Port:</td>
+        <td><input type="number" id="http-port" data-pref="network.proxy.http_port"></td>
+      </tr>
+      <tr>
+        <td colspan="4">
+          <label><input id="for-all" type="checkbox" checked>Use this proxy server for all protocols</label>
+        </td>
+      </tr>
+      <tr>
+        <td>SSL Proxy:</td>
+        <td><input type="text" id="ssl-host" placeholder="0.0.0.0" data-pref="network.proxy.ssl"></td>
+        <td>Port:</td>
+        <td><input type="number" id="ssl-port" data-pref="network.proxy.ssl_port"></td>
+      </tr>
+      <tr>
+        <td>FTP Proxy:</td>
+        <td><input type="text" id="ftp-host" placeholder="0.0.0.0" data-pref="network.proxy.ftp"></td>
+        <td>Port:</td>
+        <td><input type="number" id="ftp-port" data-pref="network.proxy.ftp_port"></td>
+      </tr>
+      <tr>
+        <td>SOCKS Host:</td>
+        <td><input type="text" id="socks-host" placeholder="0.0.0.0" data-pref="network.proxy.socks"></td>
+        <td>Port:</td>
+        <td><input type="number" id="socks-port" data-pref="network.proxy.socks_port"></td>
+      </tr>
+      <tr>
+        <td colspan="4">
+          <label>SOCKS v4<input type="radio" name="socks" value="4"></label>
+          <label>SOCKS v5<input type="radio" name="socks" value="5"></label>
+          <label><input id="dns" type="checkbox" data-pref="network.proxy.socks_remote_dns">Remote DNS</label>
+        </td>
+      </tr>
+    </table>
+    <div id="links">
+      <span>Links:</span>
+      <a href="#" data-cmd="open-ip">Check external IP</a>,
+      <a href="#" data-cmd="open-geo">Check GEO location</a>,
+      <a href="#" data-cmd="open-leak">Check IP and DNS leakage</a>
+    </div>
+    <script src="shadow_index.js"></script>
+  </body>
+</html>

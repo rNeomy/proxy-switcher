@@ -1,0 +1,93 @@
+body {
+  background-color: #fff;
+  padding: 10px;
+  margin: 0;
+  font: 12px arial,sans-serif;
+  -moz-user-select: none;
+  user-select: none;
+}
+table {
+  width: 100%;
+  font-size: 100%;
+}
+
+input[type=text],
+input[type=number] {
+  width: 100%;
+}
+#tabs {
+  height: 50px;
+  line-height: 50px;
+}
+#tabs td {
+  text-align: center;
+  color: #aaa;
+}
+#tabs label,
+#socks label {
+  cursor: pointer;
+  white-space: nowrap;
+}
+#tabs label {
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+}
+#tabs label:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+#tabs input[name=proxy],
+#socks input[name=profile] {
+  display: none;
+}
+#tabs :checked + span {
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  color: #000;
+}
+#tabs span:before {
+  content: '\e804';
+}
+#tabs :checked + span:before {
+  content: '\e803';
+}
+
+body:not([data-type="3"])>#socks,
+body:not([data-type="3"])>#socks input {
+  color: #aaa;
+  pointer-events: none;
+}
+
+#socks td:nth-child(1) {
+  width: 80px;
+}
+#socks td:nth-child(3) {
+  width: 40px;
+}
+#socks td:nth-child(4) {
+  width: 70px;
+}
+#socks tr:nth-child(1) {
+  height: 30px;
+  color: #aaa;
+}
+#socks[data-type=global] tr:nth-child(4),
+#socks[data-type=global] tr:nth-child(4) input,
+#socks[data-type=global] tr:nth-child(5),
+#socks[data-type=global] tr:nth-child(5) input,
+#socks[data-type=global] tr:nth-child(6),
+#socks[data-type=global] tr:nth-child(6) input {
+  color: #aaa;
+  pointer-events: none;
+}
+
+#socks input[name=profile]:checked + span {
+  font-weight: bold;
+}
+body[data-type="3"] #socks input[name=profile]:checked + span {
+  color: #000;
+}
+
+#links {
+  padding-top: 10px;
+}
