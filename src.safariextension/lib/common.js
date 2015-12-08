@@ -1,25 +1,21 @@
 'use strict';
 
-/**** wrapper (start) ****/
-if (typeof require !== 'undefined') {
-  var app = require('./firefox/firefox');
-  var config = require('./config');
-}
-/**** wrapper (end) ****/
+var app = require('./firefox/firefox');
+var config = require('./config');
 
 /* welcome page */
-// (function () {
-//   var version = config.welcome.version;
-//   if (app.version() !== version) {
-//     app.timer.setTimeout(function () {
-//       app.tab.open(
-//         'http://add0n.com/proxy-switcher.html?v=' + app.version() +
-//         (version ? '&p=' + version + '&type=upgrade' : '&type=install')
-//       );
-//       config.welcome.version = app.version();
-//     }, config.welcome.timeout);
-//   }
-// })();
+(function () {
+  var version = config.welcome.version;
+  if (app.version() !== version) {
+    app.timer.setTimeout(function () {
+      app.tab.open(
+        'http://firefox.add0n.com/proxy-switcher.html?v=' + app.version() +
+        (version ? '&p=' + version + '&type=upgrade' : '&type=install')
+      );
+      config.welcome.version = app.version();
+    }, config.welcome.timeout);
+  }
+})();
 
 /* proxy.type */
 app.popup.receive('proxy.type', function (index) {
@@ -85,7 +81,6 @@ app.popup.receive('profile-index', function (i) {
     config.proxy.pIndex = i;
     app.proxy.fromJSON(app.storage.read('profile-' + config.proxy.pIndex));
     app.popup.init();
-    console.error('here', i);
   }
 });
 
@@ -93,15 +88,19 @@ app.popup.receive('profile-index', function (i) {
 app.popup.receive('command', function (cmd) {
   switch (cmd) {
   case 'open-ip':
-    app.tab.open('http://checkip.dyndns.org/');
+    app.tab.open(config.links.ip);
     app.popup.hide();
     break;
   case 'open-geo':
-    app.tab.open('http://www.geoipview.com/');
+    app.tab.open(config.links.geo);
     app.popup.hide();
     break;
   case 'open-leak':
-    app.tab.open('https://ipleak.net');
+    app.tab.open(config.links.leak);
+    app.popup.hide();
+    break;
+  case 'open-faq':
+    app.tab.open(config.links.faq);
     app.popup.hide();
     break;
   case 'edit-profiles':

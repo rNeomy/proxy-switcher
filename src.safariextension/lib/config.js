@@ -1,13 +1,7 @@
 'use strict';
 
-var isFirefox = typeof require !== 'undefined', config;
-if (isFirefox) {
-  var app = require('./firefox/firefox');
-  config = exports;
-}
-else {
-  config = {};
-}
+var app = require('./firefox/firefox');
+var config = exports;
 
 config.popup = {
   width: 500,
@@ -53,3 +47,18 @@ config.welcome = {
     app.storage.write('show', val);
   }
 };
+
+config.links = {
+  get faq () {
+    return 'http://firefox.add0n.com/proxy-switcher.html';
+  },
+  get ip () {
+    return app.storage.read('open-ip') || 'http://checkip.dyndns.org/';
+  },
+  get geo () {
+    return app.storage.read('open-geo') || 'http://www.geoipview.com/';
+  },
+  get leak () {
+    return app.storage.read('open-leak') || 'https://ipleak.net';
+  }
+}

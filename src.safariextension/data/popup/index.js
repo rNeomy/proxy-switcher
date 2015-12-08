@@ -101,7 +101,6 @@ background.receive('profiles', function (profiles) {
   });
 });
 background.receive('profile-index', function (i) {
-  console.error('[name=profile][value="' + i + '"]');
   document.querySelector('[name=profile][value="' + i + '"]').click();
 });
 document.addEventListener('click', function (e) {
