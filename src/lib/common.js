@@ -3,31 +3,33 @@
 var app = require('./firefox/firefox');
 var config = require('./config');
 
-/* welcome page */
-(function () {
-  var version = config.welcome.version;
-  if (app.version() !== version) {
-    app.timer.setTimeout(function () {
-      app.tab.open(
-        'http://firefox.add0n.com/proxy-switcher.html?v=' + app.version() +
-        (version ? '&p=' + version + '&type=upgrade' : '&type=install')
-      );
-      config.welcome.version = app.version();
-    }, config.welcome.timeout);
-  }
-})();
-
 /* proxy.type */
-app.popup.receive('proxy.type', function (index) {
+function setProxy (index) {
   if (index === null) {
     app.popup.send('proxy.type', app.proxy.type);
   }
   else {
     app.proxy.type = index;
-    app.button.icon = ['gray', 'blue', 'green', 'red'][index];
+    if (index === 3) { // red
+      let tmp = 'red';
+      if (config.proxy.pIndex  && config.proxy.pIndex < 6) {
+        tmp = 'red/' + config.proxy.pIndex;
+      }
+      if (config.proxy.pIndex > 5) {
+        tmp = 'red/plus';
+      }
+      app.button.icon = tmp;
+    }
+    else {
+      app.button.icon =  ['gray', 'blue', 'green', 'red', 'orange'][index];
+    }
   }
+}
+app.popup.receive('proxy.type', setProxy);
+setProxy(app.proxy.type);
+app.proxy.observe('network.proxy.type', function () {
+  setProxy(app.proxy.type);
 });
-app.button.icon = ['gray', 'blue', 'green', 'red'][app.proxy.type];
 
 /* attached */
 app.popup.receive('attached', function (bol) {
@@ -38,6 +40,16 @@ app.popup.receive('attached', function (bol) {
     config.proxy.attached = bol;
   }
 });
+
+app.popup.receive('automatic', function (val) {
+  if (val === null) {
+    app.popup.send('automatic', app.proxy.get('network.proxy.autoconfig_url'));
+  }
+  else {
+    app.proxy.set('network.proxy.autoconfig_url', val);
+  }
+});
+app.popup.receive('reload-pac', app.proxy.reload);
 
 /* prefs */
 app.popup.receive('pref-changed', function (obj) {
@@ -71,7 +83,10 @@ app.popup.receive('pref', function (pref) {
 
 /* profiles */
 app.popup.receive('profiles', function () {
-  app.popup.send('profiles', config.proxy.profiles);
+  app.popup.send('profiles', {
+    profiles: config.proxy.profiles,
+    index: config.proxy.pIndex
+  });
 });
 app.popup.receive('profile-index', function (i) {
   if (i === null) {
@@ -88,26 +103,44 @@ app.popup.receive('profile-index', function (i) {
 app.popup.receive('command', function (cmd) {
   switch (cmd) {
   case 'open-ip':
-    app.tab.open(config.links.ip);
     app.popup.hide();
+    app.tab.open(config.links.ip);
     break;
   case 'open-geo':
-    app.tab.open(config.links.geo);
     app.popup.hide();
+    app.tab.open(config.links.geo);
     break;
   case 'open-leak':
-    app.tab.open(config.links.leak);
     app.popup.hide();
+    app.tab.open(config.links.leak);
     break;
   case 'open-faq':
-    app.tab.open(config.links.faq);
     app.popup.hide();
+    app.tab.open(config.links.faq);
+    break;
+  case 'open-console':
+    app.popup.hide();
+    app.developer.HUDService.openBrowserConsoleOrFocus();
     break;
   case 'edit-profiles':
+    app.popup.hide();
     var tmp = app.prompt('Edit profile names', 'Comma separated list of profiles:', config.proxy.profiles);
     if (tmp.result) {
       config.proxy.profiles = tmp.input;
     }
-    app.popup.hide();
+  }
+});
+
+/* welcome page */
+app.startup(function () {
+  var version = config.welcome.version;
+  if (app.version() !== version) {
+    app.timer.setTimeout(function () {
+      app.tab.open(
+        'http://firefox.add0n.com/proxy-switcher.html?v=' + app.version() +
+        (version ? '&p=' + version + '&type=upgrade' : '&type=install')
+      );
+      config.welcome.version = app.version();
+    }, config.welcome.timeout);
   }
 });

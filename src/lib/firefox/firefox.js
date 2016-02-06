@@ -12,8 +12,10 @@ var self          = require('sdk/self'),
     prefsvc       = require('sdk/preferences/service'),
     {on, off, once, emit} = require('sdk/event/core'),
     {ToggleButton} = require('sdk/ui/button/toggle'),
-    {Cc, Ci}      = require('chrome'),
+    {Cc, Ci, Cu}  = require('chrome'),
     config        = require('../config');
+
+var {XPCOMUtils} = Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
 // Event Emitter
 exports.on = on.bind(null, exports);
@@ -133,6 +135,17 @@ exports.notification = function (title, text) {
   });
 };
 
+exports.developer = {};
+XPCOMUtils.defineLazyGetter(exports.developer, 'HUDService', function () {
+  let  {devtools} = Cu.import('resource://gre/modules/devtools/Loader.jsm');
+  try {
+    return devtools.require('devtools/webconsole/hudservice');
+  }
+  catch (e) {
+    return devtools.require('devtools/client/webconsole/hudservice');
+  }
+});
+
 exports.proxy = (function () {
   unload.when(function (reason) {
     // reseting network type back to factory on uninstall only
@@ -141,17 +154,42 @@ exports.proxy = (function () {
     }
   });
   return {
+    reload: function () {
+      let url = prefsvc.get('network.proxy.autoconfig_url');
+      let pps = Cc['@mozilla.org/network/protocol-proxy-service;1'];
+      if ('nsPIProtocolProxyService' in Ci) {
+        pps = pps.getService(Ci.nsPIProtocolProxyService);
+        pps.configureFromPAC(url);
+      }
+      else {
+        pps = pps.getService();
+        pps.reloadPAC();
+      }
+    },
     get type () {
-      return {0: 0, 4: 1, 5: 2, 1: 3}[prefsvc.get('network.proxy.type')] || 0;
+      return {0: 0, 4: 1, 5: 2, 1: 3, 2: 4}[prefsvc.get('network.proxy.type')] || 0;
     },
     set type (val) {
-      prefsvc.set('network.proxy.type', {0: 0, 1: 4, 2: 5, 3: 1}[val]);
+      prefsvc.set('network.proxy.type', {0: 0, 1: 4, 2: 5, 3: 1, 4: 2}[val]);
     },
     set: function (pref, value) {
       prefsvc.set(pref, value);
     },
     get: function (pref) {
       return prefsvc.get(pref);
+    },
+    observe: function (pref, callback) {
+      let branch = Cc['@mozilla.org/preferences-service;1']
+        .getService(Ci.nsIPrefService).getBranch(pref);
+      let observer = {
+        observe: function () {
+          callback(pref);
+        }
+      };
+      branch.addObserver('', observer, false);
+      unload.when(function () {
+        branch.removeObserver('', observer);
+      });
     },
     toJSON: function () {
       return JSON.stringify({
@@ -174,6 +212,7 @@ exports.proxy = (function () {
           version: prefsvc.get('network.proxy.socks_version')
         },
         dns:  prefsvc.get('network.proxy.socks_remote_dns'),
+        noProxy:  prefsvc.get('network.proxy.no_proxies_on'),
         attached: exports.storage.read('attached')
       });
     },
@@ -221,6 +260,7 @@ exports.proxy = (function () {
         prefsvc.reset('network.proxy.socks_remote_dns');
       }
       exports.storage.write('attached', 'attached' in tmp ? tmp.attached : true);
+      prefsvc.set('network.proxy.no_proxies_on', 'noProxy' in tmp ? tmp.noProxy : 'localhost, 127.0.0.1');
     }
   };
 })();
@@ -233,4 +273,10 @@ exports.prompt = function (title, msg, input) {
     result: result,
     input: input.value
   };
+};
+
+exports.startup = function (callback) {
+  if (self.loadReason === 'install' || self.loadReason === 'startup') {
+    callback();
+  }
 };

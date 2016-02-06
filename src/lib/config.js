@@ -4,8 +4,8 @@ var app = require('./firefox/firefox');
 var config = exports;
 
 config.popup = {
-  width: 500,
-  height: 300
+  width: 550,
+  height: 370
 };
 
 config.proxy = {

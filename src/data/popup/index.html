@@ -4,24 +4,29 @@
     <link rel="stylesheet" href="fontello.css">
     <link rel="stylesheet" href="index.css">
   </head>
-  <body>
+  <body data-type="3">
     <table id="tabs">
       <tr>
         <td><label><input type="radio" name="proxy" value="0"><span class="icon-">No proxy</span></label></td>
         <td><label><input type="radio" name="proxy" value="1"><span class="icon-">Auto-detect proxy</span></label></td>
         <td><label><input type="radio" name="proxy" value="2"><span class="icon-">System proxy</span></label></td>
         <td><label><input type="radio" name="proxy" value="3"><span class="icon-">Manual</span></label></td>
+        <td><label><input type="radio" name="proxy" value="4"><span class="icon-">Automatic</span></label></td>
       </tr>
     </table>
-    <table id="socks" data-type='global'>
+    <div id="socks">
+    <table data-type='global'>
       <tr>
-        <td colspan="3">
-          <label><input type="radio" name="profile" value="0"><span>Profile 1</span></label> •
-          <label><input type="radio" name="profile" value="1"><span>Profile 2</span></label> •
-          <label><input type="radio" name="profile" value="2"><span>Profile 3</span></label> •
-          <label><input type="radio" name="profile" value="3"><span>Profile 4</span></label> •
-          <label><input type="radio" name="profile" value="4"><span>Profile 5</span></label> •
-          <label><input type="radio" name="profile" value="5"><span>Profile 6</span></label>
+        <td>Profile:</td>
+        <td colspan="2">
+          <select>
+            <option value="0" name="profile">Profile 1</option>
+            <option value="1" name="profile">Profile 2</option>
+            <option value="2" name="profile">Profile 3</option>
+            <option value="3" name="profile">Profile 4</option>
+            <option value="4" name="profile">Profile 5</option>
+            <option value="5" name="profile">Profile 6</option>
+          </select>
         </td>
         <td align="right"><a href="#" data-cmd="edit-profiles">Edit</a></td>
       </tr>
@@ -48,7 +53,7 @@
         <td>Port:</td>
         <td><input type="number" id="ftp-port" data-pref="network.proxy.ftp_port"></td>
       </tr>
-      <tr>
+      <tr id="automatic">
         <td>SOCKS Host:</td>
         <td><input type="text" id="socks-host" placeholder="0.0.0.0" data-pref="network.proxy.socks"></td>
         <td>Port:</td>
@@ -61,9 +66,24 @@
           <label><input id="dns" type="checkbox" data-pref="network.proxy.socks_remote_dns">Remote DNS</label>
         </td>
       </tr>
+      <tr>
+        <td>No Proxy for:</td>
+        <td colspan="3">
+          <input type="text" id="no-proxy" data-pref="network.proxy.no_proxies_on">
+        </td>
+      </tr>
     </table>
+    </div>
+    <div id="automatic-tab">
+      Automatic proxy configuration URL:
+      <div>
+        <input id="automatic-text" type="text" placeholder="">
+        <input id="automatic-button" type="button" value="Reload">
+      </div>
+      <a href="#" data-cmd="open-console">Open Error Console</a>
+    </div>
     <div id="links">
-      <span>Links:</span>
+      <b>Links:</b>
       <a href="#" data-cmd="open-ip">Check external IP</a>&nbsp;|&nbsp;
       <a href="#" data-cmd="open-geo">Check GEO location</a>&nbsp;|&nbsp;
       <a href="#" data-cmd="open-leak">Check DNS leakage</a>&nbsp;|&nbsp;

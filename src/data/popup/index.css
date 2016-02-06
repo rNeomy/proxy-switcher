@@ -1,23 +1,66 @@
+html,
+body {
+  height: 100%;
+}
+
 body {
   background-color: #fff;
-  padding: 10px;
+  padding: 0;
   margin: 0;
   font: 12px arial,sans-serif;
   -moz-user-select: none;
   user-select: none;
+  color: rgb(66, 78, 90);
+  display: flex;
+  flex-direction: column;
 }
 table {
   width: 100%;
   font-size: 100%;
 }
 
+body,
+table {
+  color: rgb(66, 78, 90);
+}
+
+#socks,
+#automatic-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0 10px;
+}
+#automatic-tab>div {
+  display: flex;
+  width: 100%;
+  padding: 10px 0;
+}
+
 input[type=text],
 input[type=number] {
   width: 100%;
 }
+input[type=button] {
+  border: solid 1px #cccccc;
+  margin: 0 0 0 5px;
+  cursor: pointer;
+}
+input[type=button]:active {
+  border-color: #dddddd;
+}
+select {
+  width: 200px;
+  border: solid 1px #cccccc;
+  height: 24px;
+}
+
 #tabs {
   height: 50px;
   line-height: 50px;
+  border-bottom: solid 4px #424f5a;
 }
 #tabs td {
   text-align: center;
@@ -53,11 +96,15 @@ input[type=number] {
 }
 
 body:not([data-type="3"])>#socks,
+body:not([data-type="3"])>#socks select,
 body:not([data-type="3"])>#socks input {
   color: #aaa;
   pointer-events: none;
 }
 
+#socks tr {
+  height: 28px;
+}
 #socks td:nth-child(1) {
   width: 80px;
 }
@@ -87,7 +134,23 @@ body:not([data-type="3"])>#socks input {
 body[data-type="3"] #socks input[name=profile]:checked + span {
   color: #000;
 }
+body[data-type="4"] #socks {
+  display: none;
+}
+body:not([data-type="4"]) #automatic-tab {
+  display: none;
+}
 
 #links {
-  padding-top: 10px;
+  height: 50px;
+  line-height: 50px;
+  background-color: #424f5a;
+  color: #fff;
+  padding: 0 10px;
+}
+a {
+  text-decoration: none;
+}
+#links a {
+  color: #fff;
 }
