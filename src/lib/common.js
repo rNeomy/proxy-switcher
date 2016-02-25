@@ -1,5 +1,6 @@
 'use strict';
 
+var tbExtra = require('./tbExtra');
 var app = require('./firefox/firefox');
 var config = require('./config');
 
@@ -128,6 +129,14 @@ app.popup.receive('command', function (cmd) {
     if (tmp.result) {
       config.proxy.profiles = tmp.input;
     }
+  }
+});
+
+/* middle clicking */
+tbExtra.onClick(function (e) {
+  if (e.button === 1) {
+    app.proxy.type = (app.proxy.type + 1) % 5;
+    setProxy(app.proxy.type);
   }
 });
 

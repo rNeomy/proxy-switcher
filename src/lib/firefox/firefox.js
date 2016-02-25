@@ -29,7 +29,7 @@ exports.removeListener = function removeListener (type, listener) {
 exports.button = (function () {
   var button = new ToggleButton({
     id: self.name,
-    label: 'Proxy Switcher',
+    label: 'Proxy Switcher\n\nLeft Click: Open panel\nMiddle Click: Change proxy type',
     icon: {
       '18': './icons/toolbar/gray/18.png',
       '36': './icons/toolbar/gray/36.png'
