@@ -135,7 +135,12 @@ app.popup.receive('command', function (cmd) {
 /* middle clicking */
 tbExtra.onClick(function (e) {
   if (e.button === 1) {
-    app.proxy.type = (app.proxy.type + 1) % 5;
+    if (e.metaKey || e.ctrlKey) {
+      app.proxy.type = (app.proxy.type - 1 + 5) % 5;
+    }
+    else {
+      app.proxy.type = (app.proxy.type + 1) % 5;
+    }
     setProxy(app.proxy.type);
   }
 });

@@ -29,7 +29,7 @@ exports.removeListener = function removeListener (type, listener) {
 exports.button = (function () {
   var button = new ToggleButton({
     id: self.name,
-    label: 'Proxy Switcher\n\nLeft Click: Open panel\nMiddle Click: Change proxy type',
+    label: 'Proxy Switcher\n\nLeft Click: Open panel\nMiddle Click: Select next proxy type\nMiddle + Ctrl Click: Select previous proxy type',
     icon: {
       '18': './icons/toolbar/gray/18.png',
       '36': './icons/toolbar/gray/36.png'
@@ -46,7 +46,7 @@ exports.button = (function () {
   });
   return {
     _obj: button,
-    set icon (val) {
+    set icon (val) {  // jshint ignore:line
       button.icon = {
         18: './icons/toolbar/' + val + '/18.png',
         36: './icons/toolbar/' + val + '/36.png'
