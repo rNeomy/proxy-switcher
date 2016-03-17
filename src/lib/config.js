@@ -29,6 +29,28 @@ config.proxy = {
   },
   set pIndex (val) {
     app.storage.write('profile-index', val);
+  },
+  pac: {
+    get index () {
+      return parseInt(app.storage.read('pac-index') || '0');
+    },
+    set index (val) {
+      app.storage.write('pac-index', val);
+    },
+    value: function (index, val) {
+      if (val !== null) {
+        app.storage.write('pac-value-' + index, val);
+      }
+      else {
+        let pac = app.storage.read('pac-value-' + index);
+        if (!pac && index === 0) {
+          val = app.proxy.get('network.proxy.autoconfig_url');
+          app.storage.write('pac-value-0', val);
+          return val;
+        }
+        return pac || '';
+      }
+    }
   }
 };
 
@@ -53,12 +75,15 @@ config.links = {
     return 'http://firefox.add0n.com/proxy-switcher.html';
   },
   get ip () {
-    return app.storage.read('open-ip') || 'http://checkip.dyndns.org/';
+    return app.storage.read('open-ip') || 'http://tools.add0n.com/what-is-my-ip.php';
   },
   get geo () {
     return app.storage.read('open-geo') || 'http://www.geoipview.com/';
   },
   get leak () {
     return app.storage.read('open-leak') || 'https://ipleak.net';
+  },
+  get pac () {
+    return 'http://blog.add0n.com/2016/02/11/configure-proxy-settings-in-firefox.html';
   }
 }

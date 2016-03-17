@@ -259,7 +259,7 @@ exports.proxy = (function () {
       else {
         prefsvc.reset('network.proxy.socks_remote_dns');
       }
-      exports.storage.write('attached', 'attached' in tmp ? tmp.attached : true);
+      //exports.storage.write('attached', 'attached' in tmp ? tmp.attached : true);
       prefsvc.set('network.proxy.no_proxies_on', 'noProxy' in tmp ? tmp.noProxy : 'localhost, 127.0.0.1');
     }
   };

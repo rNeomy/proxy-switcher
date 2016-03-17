@@ -25,18 +25,21 @@ table {
 }
 
 #socks,
+#no-settings-tab,
 #automatic-tab {
   flex: 1;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
   padding: 0 10px;
 }
+#no-settings-tab {
+  align-items: center;
+}
 #automatic-tab>div {
   display: flex;
   width: 100%;
-  padding: 10px 0;
 }
 
 input[type=text],
@@ -134,11 +137,12 @@ body:not([data-type="3"])>#socks input {
 body[data-type="3"] #socks input[name=profile]:checked + span {
   color: #000;
 }
-body[data-type="4"] #socks {
-  display: none;
-}
-body:not([data-type="4"]) #automatic-tab {
-  display: none;
+body[data-type="0"] #no-settings-tab,
+body[data-type="1"] #no-settings-tab,
+body[data-type="2"] #no-settings-tab,
+body[data-type="3"] #socks,
+body[data-type="4"] #automatic-tab {
+  display: flex;
 }
 
 #links {

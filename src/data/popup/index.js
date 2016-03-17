@@ -47,7 +47,7 @@ document.addEventListener('change', function (e) {
   if (target.dataset.pref) {
     var value = target.value;
     if (target.type === 'number') {
-      value = parseInt(value);
+      value = parseInt(value) || 0;
     }
     if (target.type === 'checkbox') {
       value = target.checked;
@@ -94,17 +94,25 @@ background.receive('pref', function (obj) {
 });
 
 /* automatic */
-(function (input, button) {
-  background.receive('automatic', function (val) {
-    input.value = val;
-  });
+(function (input, button, form) {
   input.addEventListener('change', function () {
-    background.send('automatic', input.value);
+    background.send('update-pac-value', input.value);
   });
   button.addEventListener('click', function () {
     background.send('reload-pac');
   });
-})(document.getElementById('automatic-text'), document.getElementById('automatic-button'));
+  form.addEventListener('click', function (e) {
+    if (e.target.value) {
+      background.send('update-pac-index', parseInt(e.target.value));
+    }
+  });
+  background.receive('update-pac-index', function (index) {
+    form.querySelector(`input[value="${index}"]`).checked = true;
+  });
+  background.receive('update-pac-value', function (value) {
+    input.value = value;
+  });
+})($('automatic-text'), $('automatic-button'), $('automatic-form'));
 
 /* profiles */
 background.receive('profiles', (function () {
@@ -129,7 +137,6 @@ background.receive('profiles', (function () {
   };
 })());
 background.receive('profile-index', function (i) {
-  console.error(i, document.querySelector('select').selectedIndex);
   document.querySelector('select').selectedIndex = i;
 });
 document.querySelector('select').addEventListener('change', function (e) {
@@ -153,7 +160,8 @@ background.receive('init', function () {
   background.send('pref', 'network.proxy.socks_version');
   background.send('profiles');
   background.send('attached', null);
-  background.send('automatic', null);
+  background.send('update-pac-value', null);
+  background.send('update-pac-index', null);
   [].forEach.call(document.querySelectorAll('[data-pref]'), function (elem) {
     var pref = elem.dataset.pref;
     background.send('pref', pref);

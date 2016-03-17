@@ -42,15 +42,29 @@ app.popup.receive('attached', function (bol) {
   }
 });
 
-app.popup.receive('automatic', function (val) {
-  if (val === null) {
-    app.popup.send('automatic', app.proxy.get('network.proxy.autoconfig_url'));
+app.popup.receive('reload-pac', app.proxy.reload);
+
+app.popup.receive('update-pac-index', function (index) {
+  if (index !== null) {
+    config.proxy.pac.index = index;
+    let value = config.proxy.pac.value(index, null);
+    app.proxy.set('network.proxy.autoconfig_url', value);
+    app.popup.send('update-pac-value', value);
   }
   else {
-    app.proxy.set('network.proxy.autoconfig_url', val);
+    app.popup.send('update-pac-index', config.proxy.pac.index);
   }
 });
-app.popup.receive('reload-pac', app.proxy.reload);
+app.popup.receive('update-pac-value', function (value) {
+  let index = config.proxy.pac.index;
+  if (value !== null) {
+    config.proxy.pac.value(index, value);
+    app.proxy.set('network.proxy.autoconfig_url', value);
+  }
+  else {
+    app.popup.send('update-pac-value', config.proxy.pac.value(index, null));
+  }
+});
 
 /* prefs */
 app.popup.receive('pref-changed', function (obj) {
@@ -122,6 +136,10 @@ app.popup.receive('command', function (cmd) {
   case 'open-console':
     app.popup.hide();
     app.developer.HUDService.openBrowserConsoleOrFocus();
+    break;
+  case 'open-pac':
+    app.popup.hide();
+    app.tab.open(config.links.pac);
     break;
   case 'edit-profiles':
     app.popup.hide();

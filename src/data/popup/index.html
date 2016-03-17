@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="fontello.css">
     <link rel="stylesheet" href="index.css">
   </head>
-  <body data-type="3">
+  <body data-type="4">
     <table id="tabs">
       <tr>
         <td><label><input type="radio" name="proxy" value="0"><span class="icon-">No proxy</span></label></td>
@@ -74,20 +74,33 @@
       </tr>
     </table>
     </div>
+    <div id="no-settings-tab">
+      No extra settings
+    </div>
     <div id="automatic-tab">
-      Automatic proxy configuration URL:
+      <p>Automatic proxy configuration URL:</p>
+      <form id="automatic-form">
+        PAC profile:
+        <label><input type="radio" name="pac" value="0">1</label>
+        <label><input type="radio" name="pac" value="1">2</label>
+        <label><input type="radio" name="pac" value="2">3</label>
+        <label><input type="radio" name="pac" value="3">4</label>
+        <label><input type="radio" name="pac" value="4">5</label>
+      </form>
       <div>
-        <input id="automatic-text" type="text" placeholder="">
+        <input id="automatic-text" type="text" placeholder="PAC file location in file:// or http:// format for this profile">
         <input id="automatic-button" type="button" value="Reload">
       </div>
-      <a href="#" data-cmd="open-console">Open Error Console</a>
+      <p>
+        Open <a href="#" data-cmd="open-console">Error Console</a> to track PAC syntax errors. <a href="#" data-cmd="open-pac">Read more</a> on how to write a PAC script
+      </p>
     </div>
     <div id="links">
       <b>Links:</b>
       <a href="#" data-cmd="open-ip">Check external IP</a>&nbsp;|&nbsp;
       <a href="#" data-cmd="open-geo">Check GEO location</a>&nbsp;|&nbsp;
       <a href="#" data-cmd="open-leak">Check DNS leakage</a>&nbsp;|&nbsp;
-      <a href="#" data-cmd="open-faq">Open FAQ page</a>
+      <a href="#" data-cmd="open-faq">Open FAQs page</a>
     </div>
   </body>
 </html>
