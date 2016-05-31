@@ -107,6 +107,7 @@ body:not([data-type="3"])>#socks input {
 
 #socks tr {
   height: 28px;
+  white-space: nowrap;
 }
 #socks td:nth-child(1) {
   width: 80px;

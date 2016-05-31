@@ -21,8 +21,28 @@ config.proxy = {
   set profiles (val) {
     var tmp = val.split(/\s*\,\s*/).map(function (p) {
       return p.trim().substr(0, 10);
-    }).join(', ');
-    app.storage.write('profiles', tmp);
+    });
+
+    let profiles =  {};
+    let keys = config.proxy.profiles.split(', ');
+    keys.forEach((name, i) => profiles[name] = app.storage.read('profile-' + i));
+    console.error(config.proxy.profiles, val)
+    tmp.forEach(function (name, i) {
+      console.error('profile-' + i, name, profiles[name] ,i, keys[i], profiles[keys[i]]);
+      app.storage.write('profile-' + i, profiles[name] || profiles[keys[i]] || '');
+    });
+
+    app.storage.write('profiles', tmp.join(', '));
+    config.proxy.pIndex = Math.min(config.proxy.pIndex, tmp.length - 1);
+  },
+  getProfile: function (i) {
+    return app.storage.read('profile-' + i);
+  },
+  setProfile: function (i, name, str) {
+    app.storage.write('profile-' + i, str);
+    let tmp = config.proxy.profiles.split(', ');
+    tmp[i] = name;
+    app.storage.write('profiles', tmp.join(', '));
   },
   get pIndex () {
     return parseInt(app.storage.read('profile-index') || '0');

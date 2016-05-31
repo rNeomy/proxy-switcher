@@ -95,6 +95,11 @@ app.popup.receive('pref', function (pref) {
     value: app.proxy.get(pref)
   });
 });
+function reset () {
+  app.proxy.fromJSON(app.storage.read('profile-' + config.proxy.pIndex));
+  app.popup.init();
+}
+app.sp.on('profile-index', reset);
 
 /* profiles */
 app.popup.receive('profiles', function () {
@@ -109,8 +114,6 @@ app.popup.receive('profile-index', function (i) {
   }
   else {
     config.proxy.pIndex = i;
-    app.proxy.fromJSON(app.storage.read('profile-' + config.proxy.pIndex));
-    app.popup.init();
   }
 });
 
@@ -143,10 +146,29 @@ app.popup.receive('command', function (cmd) {
     break;
   case 'edit-profiles':
     app.popup.hide();
-    var tmp = app.prompt('Edit profile names', 'Comma separated list of profiles:', config.proxy.profiles);
-    if (tmp.result) {
+    let old = config.proxy.profiles;
+    let tmp = app.prompt('Edit profile names', 'Comma separated list of profiles:', old);
+    if (tmp.result && tmp.input !== old) {
       config.proxy.profiles = tmp.input;
     }
+    break;
+  case 'import-profiles':
+    app.fromFile(function (profiles, json) {
+      profiles.forEach((p, i) => config.proxy.setProfile(i, p,json[p]));
+      config.proxy.profiles = profiles.join(', ');
+      reset();
+      config.proxy.pIndex = 0;
+    });
+    break;
+  case 'export-profiles':
+    let obj = {};
+    let profiles = config.proxy.profiles;
+    profiles.split(', ').forEach(function (name, index) {
+      obj[name] = config.proxy.getProfile(index);
+    });
+    app.download('data:text;base64,' + app.base64.encode(JSON.stringify(obj)));
+    app.notification('profiles are exported to your "Desktop" directory');
+    break;
   }
 });
 

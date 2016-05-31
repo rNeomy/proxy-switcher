@@ -10,12 +10,16 @@ var self          = require('sdk/self'),
     timers        = require('sdk/timers'),
     unload        = require('sdk/system/unload'),
     prefsvc       = require('sdk/preferences/service'),
+    base64        = require('sdk/base64'),
     {on, off, once, emit} = require('sdk/event/core'),
     {ToggleButton} = require('sdk/ui/button/toggle'),
     {Cc, Ci, Cu}  = require('chrome'),
     config        = require('../config');
 
 var {XPCOMUtils} = Cu.import('resource://gre/modules/XPCOMUtils.jsm');
+var {Downloads} = Cu.import('resource://gre/modules/Downloads.jsm');
+var {OS, TextDecoder} = Cu.import('resource://gre/modules/osfile.jsm');
+var {Services} = Cu.import('resource://gre/modules/Services.jsm');
 
 // Event Emitter
 exports.on = on.bind(null, exports);
@@ -24,6 +28,9 @@ exports.emit = emit.bind(null, exports);
 exports.removeListener = function removeListener (type, listener) {
   off(exports, type, listener);
 };
+
+exports.sp = sp;
+exports.base64 = base64;
 
 //toolbar button
 exports.button = (function () {
@@ -83,6 +90,7 @@ exports.popup = (function () {
     }
   });
   popup.on('show', () => popup.port.emit('init'));
+
   return {
     _obj: popup,
     send: function (id, data) {
@@ -127,11 +135,11 @@ exports.version = function () {
 
 exports.timer = timers;
 
-exports.notification = function (title, text) {
+exports.notification = function (text) {
   notifications.notify({
-    title: title,
-    text: text,
-    iconURL: data.url('icons/32.png')
+    title: 'Proxy Switcher',
+    text,
+    iconURL: data.url('icons/64.png')
   });
 };
 
@@ -278,5 +286,43 @@ exports.prompt = function (title, msg, input) {
 exports.startup = function (callback) {
   if (self.loadReason === 'install' || self.loadReason === 'startup') {
     callback();
+  }
+};
+
+exports.download = function (source) {
+  Promise.all([Downloads.getList(Downloads.ALL), Downloads.createDownload({
+    source,
+    target: OS.Path.join(OS.Constants.Path.desktopDir, 'proxy-switcher-profiles.json')
+  })]).then(function ([list, download]) {
+    list.add(download);
+    download.start();
+  });
+};
+
+exports.fromFile = function (callback) {
+  let browserWindow = Cc['@mozilla.org/appshell/window-mediator;1'].
+                          getService(Ci.nsIWindowMediator).
+                          getMostRecentWindow('navigator:browser');
+  let filePicker = Cc['@mozilla.org/filepicker;1'].createInstance(Ci.nsIFilePicker);
+  filePicker.init(browserWindow, 'proxy-switcher-profiles.json', Ci.nsIFilePicker.modeOpen);
+  var rv = filePicker.show();
+  if (rv === Ci.nsIFilePicker.returnOK) {
+    let decoder = new TextDecoder();
+    let promise = OS.File.read(filePicker.file.path);
+    promise = promise.then(
+      function onSuccess(array) {
+        try {
+          let json = JSON.parse(decoder.decode(array));
+          let profiles = Object.keys(json);
+          let doit = Services.prompt.confirm(null, 'Proxy Switcher', 'Your list will be overwritten with: ' + profiles);
+          if (doit) {
+            callback(profiles, json);
+          }
+        }
+        catch (e) {
+          exports.notification(e.message);
+        }
+      }
+    );
   }
 };
