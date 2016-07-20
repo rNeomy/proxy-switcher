@@ -47,17 +47,21 @@ input[type=number] {
   width: 100%;
 }
 input[type=button] {
-  border: solid 1px #cccccc;
   margin: 0 0 0 5px;
   cursor: pointer;
 }
 input[type=button]:active {
   border-color: #dddddd;
 }
+input[type=text],
+input[type=number],
+input[type=button],
 select {
-  width: 200px;
   border: solid 1px #cccccc;
   height: 24px;
+}
+select {
+  width: 200px;
 }
 
 #tabs {
@@ -158,4 +162,13 @@ a {
 }
 #links a {
   color: #fff;
+}
+
+#ftp-host,
+#socks-host,
+#http-host,
+#ssl-host {
+  background-image: url('../flags/local.png');
+  background-position: center right 5px;
+  background-repeat: no-repeat;
 }

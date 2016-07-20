@@ -18,7 +18,7 @@ var self          = require('sdk/self'),
 
 var {XPCOMUtils} = Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 var {Downloads} = Cu.import('resource://gre/modules/Downloads.jsm');
-var {OS, TextDecoder} = Cu.import('resource://gre/modules/osfile.jsm');
+var {OS, TextDecoder} = Cu.import('resource://gre/modules/osfile.jsm'); // jshint ignore:line
 var {Services} = Cu.import('resource://gre/modules/Services.jsm');
 
 // Event Emitter
@@ -84,10 +84,14 @@ exports.popup = (function () {
   var popup = require('sdk/panel').Panel({
     contentURL: data.url('./popup/index.html'),
     contentScriptFile: [data.url('./popup/firefox/firefox.js'), data.url('./popup/index.js')],
+    contentScriptOptions: {
+      base: data.url('')
+    },
     onHide: function () {
       exports.button._obj.state('window', {checked: false});
       //popup.contentURL = 'about:blank';
-    }
+    },
+    // contextMenu: true
   });
   popup.on('show', () => popup.port.emit('init'));
 

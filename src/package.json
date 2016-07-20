@@ -4,11 +4,14 @@
   "description": "Change Firefox's proxy settings right from toolbar panel",
   "id": "jid0-hjBdm7jJii7llLkqacvGnd3gHge@jetpack",
   "license": "Mozilla Public License, version 2.0",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "author": "Richard Neomy",
   "main": "lib/common.js",
+  "icon": "./data/icons/48.png",
+  "icon64": "./data/icons/64.png",
   "url": "http://firefox.add0n.com/proxy-switcher.html",
   "permissions": {
-    "private-browsing": true
+    "private-browsing": true,
+    "multiprocess": true
   }
 }

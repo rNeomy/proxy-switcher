@@ -12,14 +12,12 @@ var onClick = function () {};
   unload.when(() => CustomizableUI.removeListener(listen));
 })({
   onWidgetBeforeDOMChange: function (tbb) {
-    if (tbb.id.indexOf(self.name) === -1) {
+    if (tbb.id.indexOf(self.name) === -1 || tbb.isOnContextInstalled) {
       return;
     }
     // Install onContext if it is not installed
-    if (!tbb.isOnContextInstalled) {
-      tbb.isOnContextInstalled = true;
-      tbb.addEventListener('click', (e) => onClick(e), false);
-    }
+    tbb.isOnContextInstalled = true;
+    tbb.addEventListener('click', (e) => onClick(e), false);
   }
 });
 

@@ -26,7 +26,6 @@ config.proxy = {
     let profiles =  {};
     let keys = config.proxy.profiles.split(', ');
     keys.forEach((name, i) => profiles[name] = app.storage.read('profile-' + i));
-    console.error(config.proxy.profiles, val)
     tmp.forEach(function (name, i) {
       console.error('profile-' + i, name, profiles[name] ,i, keys[i], profiles[keys[i]]);
       app.storage.write('profile-' + i, profiles[name] || profiles[keys[i]] || '');
