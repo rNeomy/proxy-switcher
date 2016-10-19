@@ -13,13 +13,18 @@ var self          = require('sdk/self'),
     base64        = require('sdk/base64'),
     {on, off, once, emit} = require('sdk/event/core'),
     {ToggleButton} = require('sdk/ui/button/toggle'),
-    {Cc, Ci, Cu}  = require('chrome'),
+    {Cc, Ci}      = require('chrome'),
     config        = require('../config');
 
-var {XPCOMUtils} = Cu.import('resource://gre/modules/XPCOMUtils.jsm');
-var {Downloads} = Cu.import('resource://gre/modules/Downloads.jsm');
-var {OS, TextDecoder} = Cu.import('resource://gre/modules/osfile.jsm'); // jshint ignore:line
-var {Services} = Cu.import('resource://gre/modules/Services.jsm');
+var resources = {};
+var {XPCOMUtils} = require('resource://gre/modules/XPCOMUtils.jsm');
+
+XPCOMUtils.defineLazyModuleGetter(resources, 'FileUtils', 'resource://gre/modules/FileUtils.jsm');
+XPCOMUtils.defineLazyModuleGetter(resources, 'TextDecoder', 'resource://gre/modules/osfile.jsm');
+XPCOMUtils.defineLazyModuleGetter(resources, 'OS', 'resource://gre/modules/osfile.jsm');
+XPCOMUtils.defineLazyModuleGetter(resources, 'Downloads', 'resource://gre/modules/Downloads.jsm');
+XPCOMUtils.defineLazyModuleGetter(resources, 'Services', 'resource://gre/modules/Services.jsm');
+XPCOMUtils.defineLazyModuleGetter(resources, 'devtools', 'resource://gre/modules/devtools/Loader.jsm');
 
 // Event Emitter
 exports.on = on.bind(null, exports);
@@ -149,12 +154,11 @@ exports.notification = function (text) {
 
 exports.developer = {};
 XPCOMUtils.defineLazyGetter(exports.developer, 'HUDService', function () {
-  let  {devtools} = Cu.import('resource://gre/modules/devtools/Loader.jsm');
   try {
-    return devtools.require('devtools/webconsole/hudservice');
+    return resources.devtools.require('devtools/webconsole/hudservice');
   }
   catch (e) {
-    return devtools.require('devtools/client/webconsole/hudservice');
+    return resources.devtools.require('devtools/client/webconsole/hudservice');
   }
 });
 
@@ -294,9 +298,9 @@ exports.startup = function (callback) {
 };
 
 exports.download = function (source) {
-  Promise.all([Downloads.getList(Downloads.ALL), Downloads.createDownload({
+  Promise.all([resources.Downloads.getList(resources.Downloads.ALL), resources.Downloads.createDownload({
     source,
-    target: OS.Path.join(OS.Constants.Path.desktopDir, 'proxy-switcher-profiles.json')
+    target: resources.OS.Path.join(resources.OS.Constants.Path.desktopDir, 'proxy-switcher-profiles.json')
   })]).then(function ([list, download]) {
     list.add(download);
     download.start();
@@ -311,14 +315,14 @@ exports.fromFile = function (callback) {
   filePicker.init(browserWindow, 'proxy-switcher-profiles.json', Ci.nsIFilePicker.modeOpen);
   var rv = filePicker.show();
   if (rv === Ci.nsIFilePicker.returnOK) {
-    let decoder = new TextDecoder();
-    let promise = OS.File.read(filePicker.file.path);
+    let decoder = new resources.TextDecoder();
+    let promise = resources.OS.File.read(filePicker.file.path);
     promise = promise.then(
       function onSuccess(array) {
         try {
           let json = JSON.parse(decoder.decode(array));
           let profiles = Object.keys(json);
-          let doit = Services.prompt.confirm(null, 'Proxy Switcher', 'Your list will be overwritten with: ' + profiles);
+          let doit = resources.Services.prompt.confirm(null, 'Proxy Switcher', 'Your list will be overwritten with: ' + profiles);
           if (doit) {
             callback(profiles, json);
           }
