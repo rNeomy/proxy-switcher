@@ -46,6 +46,7 @@ exports.button = (function () {
       '18': './icons/toolbar/gray/18.png',
       '36': './icons/toolbar/gray/36.png'
     },
+    badgeColor: '#666666',
     onChange: function (state) {
       if (state.checked) {
         exports.popup._obj.show({
@@ -130,8 +131,8 @@ exports.tab = {
     }
   },
   list: function () {
-    var temp = [];
-    for each (var tab in tabs) {
+    let temp = [];
+    for (let tab of tabs) {
       temp.push(tab);
     }
     return Promise.resolve(temp);
@@ -318,11 +319,15 @@ exports.fromFile = function (callback) {
     let decoder = new resources.TextDecoder();
     let promise = resources.OS.File.read(filePicker.file.path);
     promise = promise.then(
-      function onSuccess(array) {
+      function onSuccess (array) {
         try {
           let json = JSON.parse(decoder.decode(array));
           let profiles = Object.keys(json);
-          let doit = resources.Services.prompt.confirm(null, 'Proxy Switcher', 'Your list will be overwritten with: ' + profiles);
+          let doit = resources.Services.prompt.confirm(
+            null,
+            'Proxy Switcher',
+            'Your list will be overwritten with: ' + profiles
+          );
           if (doit) {
             callback(profiles, json);
           }
@@ -334,3 +339,8 @@ exports.fromFile = function (callback) {
     );
   }
 };
+
+// initializing monitor.js;
+if (prefs.monitor) {
+  require('../monitor.js');
+}

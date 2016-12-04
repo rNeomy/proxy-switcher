@@ -4,7 +4,7 @@
   "description": "Change Firefox's proxy settings right from toolbar panel",
   "id": "jid0-hjBdm7jJii7llLkqacvGnd3gHge@jetpack",
   "license": "MPLv2.0",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "author": "Richard Neomy",
   "main": "lib/common.js",
   "icon": "./data/icons/48.png",
@@ -13,5 +13,14 @@
   "permissions": {
     "private-browsing": true,
     "multiprocess": true
-  }
+  },
+  "preferences": [
+    {
+      "description": "Display the number of failed resources for current tab in the toolbar badge. Disable and re-enable the extension for this change to take place.",
+      "type": "bool",
+      "name": "monitor",
+      "value": true,
+      "title": "Monitor and log failed resources"
+    }
+  ]
 }

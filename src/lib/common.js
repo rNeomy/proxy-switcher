@@ -144,6 +144,10 @@ app.popup.receive('command', function (cmd) {
     app.popup.hide();
     app.tab.open(config.links.pac);
     break;
+  case 'error-log':
+    app.popup.hide();
+    app.emit('open-log');
+    break;
   case 'edit-profiles':
     app.popup.hide();
     let old = config.proxy.profiles;
