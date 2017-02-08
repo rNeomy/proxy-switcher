@@ -4,5 +4,6 @@ Proxy Switcher lets you change Firefox proxy settings (preferences) from a toolb
 * Access all proxy related settings in one place
 * Supports multiple profiles for easy proxy switching
 * UI is driven from Firefox's built-in proxy UI
+
 # Contribution
 Please feel free to clone this repo and open pull requests or report issues.
