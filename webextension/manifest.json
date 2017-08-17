@@ -1,0 +1,41 @@
+{
+  "name": "Proxy Switcher and Manager",
+  "short_name": "ipswitcher",
+  "description": "Manage and switch between multiple proxies quickly and easily through profiles",
+  "author": "Richard Neomy",
+  "version": "0.1.5",
+  "manifest_version": 2,
+  "default_locale": "en",
+  "permissions": [
+    "storage",
+    "tabs",
+    "notifications",
+    "proxy",
+    "*://*/*",
+    "webRequest"
+  ],
+  "browser_action": {
+    "default_icon": {
+      "16": "data/icons/16.png",
+      "32": "data/icons/32.png"
+    },
+    "default_popup": "data/panel/index.html"
+  },
+  "background": {
+    "scripts": [
+      "proxy.js",
+      "common.js"
+    ]
+  },
+  "homepage_url": "http://add0n.com/proxy-switcher.html",
+  "icons": {
+    "16": "data/icons/16.png",
+    "48": "data/icons/48.png",
+    "128": "data/icons/128.png"
+  },
+  "applications": {
+    "gecko": {
+      "strict_min_version": "57.0a1"
+    }
+  }
+}

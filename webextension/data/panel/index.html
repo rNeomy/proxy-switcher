@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <div id="toolbar">
+      <h1>Proxy Switcher</h1><span></span>
+    </div>
+    <ul id="tabs">
+      <label><input type="radio" name="tabs"><li data-mode="direct" class="no-proxy" data-open="others">Direct</li></label>
+      <label no-firefox><input type="radio" name="tabs"><li data-mode="auto_detect" class="auto-proxy" data-open="others">Auto-detect</li></label>
+      <label><input type="radio" name="tabs"><li data-mode="system" class="system-proxy" data-open="others">System Proxy</li></label>
+      <label><input type="radio" name="tabs"><li data-mode="fixed_servers" class="manual-proxy" data-open="manual">Manual Proxy</li></label>
+      <label no-firefox><input type="radio" name="tabs"><li data-mode="pac_script" class="pac-proxy" data-open="pac">PAC Script</li></label>
+      <div>
+        <input type="button" value="Error Log" data-cmd="open-failed-resources" class="hide">
+      </div>
+    </ul>
+    <div id="manual" class="body">
+      <table>
+        <colgroup>
+          <col width="90px">
+          <col>
+          <col width="40px" style="padding-left: 10px;">
+          <col width="60px">
+        </colgroup>
+        <tr>
+          <td>Profile:</td>
+          <td colspan="3">
+            <div class="flex">
+              <input type="text" name="product" list="profiles" placeholder="profile name is mandatory" data-value=""/>
+              <datalist id="profiles"></datalist>
+              <div class="modify">
+                <input type="button" disabled="true" data-cmd="delete-profile"><!--
+             --><input type="button" disabled="true" data-cmd="set-manual">
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr data-scheme="http">
+          <td>HTTP Proxy:</td>
+          <td><input type="text" placeholder="0.0.0.0" data-value=""></td>
+          <td>Port:</td>
+          <td><input type="number" data-value=""></td>
+        </tr>
+        <tr data-scheme="https">
+          <td>SSL Proxy:</td>
+          <td><input type="text" placeholder="0.0.0.0" data-value=""></td>
+          <td>Port:</td>
+          <td><input type="number" data-value=""></td>
+        </tr>
+        <tr data-scheme="ftp">
+          <td>FTP Proxy:</td>
+          <td><input type="text" placeholder="0.0.0.0" data-value=""></td>
+          <td>Port:</td>
+          <td><input type="number" data-value=""</td>
+        </tr>
+        <tr data-scheme="others">
+          <td>Other Proxy:</td>
+          <td><input type="text" placeholder="0.0.0.0" value="127.0.0.1" data-value="127.0.0.1"></td>
+          <td>Port:</td>
+          <td><input type="number" value="8888" data-value="8888"</td>
+        </tr>
+        <tr data-type="server-type">
+          <td>Server Type:</td>
+          <td>
+            <label><input type="radio" name="socks" value="http" data-value="false">HTTP</label>
+            <label><input type="radio" name="socks" value="https" data-value="false">HTTPS</label>
+            <label><input type="radio" name="socks" value="socks4" data-value="false">SOCKS v4</label>
+            <label><input type="radio" name="socks" value="socks5" checked data-value="true">SOCKS v5</label>
+          </td>
+        </tr>
+        <tr>
+          <td>Direct:</td>
+          <td colspan="3"><input type="text" placeholder="comma separated list of IPs" data-value="localhost, 127.0.0.1, 192.168.8.0" value="localhost, 127.0.0.1, 192.168.8.0" data-type="bypass-list"></td>
+        </tr>
+      </table>
+    </div>
+    <div id="pac" class="body">
+      Automatic proxy configuration
+      <table>
+        <colgroup>
+          <col width="50">
+          <col>
+        </colgroup>
+        <tr>
+          <td><label><input id="pac-1" type="radio" name="pac" value="url" data-mode="pac_script">URL</label></td>
+          <td>
+            <div class="flex">
+              <input type="text" placeholder="http://..." for="pac-1" list="pacs" data-value="">
+              <datalist id="pacs"></datalist>
+              <div class="modify">
+                <input type="button" disabled="true" data-cmd="delete-pac"><!--
+             --><input type="button" disabled="true" data-cmd="set-pac">
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><label><input id="pac-2" type="radio" name="pac" value="data" data-mode="pac_script">Inline</label></td>
+          <td class="flex" style="height: 100%">
+            <textarea id="editor" for="pac-2">function FindProxyForURL (url, host) {
+	// our local URLs from the domains below example.com don't need a proxy:
+	if (shExpMatch(host, "*.example.com")) {
+		return "DIRECT";
+	}
+
+	// URLs within this network are accessed through
+	// port 8080 on fastproxy.example.com:
+	if (isInNet(host, "10.0.0.0", "255.255.248.0")) {
+		return "PROXY fastproxy.example.com:8080";
+	}
+
+	// All other requests go through port 8080 of proxy.example.com.
+	// should that fail to respond, go directly to the WWW:
+	return "PROXY proxy.example.com:8080; DIRECT";
+}</textarea>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div class="body" id="others">No more settings! You are set!</div>
+    <div id="tools">
+      <b>Tools:</b><a href="http://tools.add0n.com/what-is-my-ip.php" target="_blank">Check external IP</a> | <a href="https://ipleak.net" target="_blank">Check DNS Leackage</a> | <a href="http://add0n.com/proxy-switcher.html" target="_blank">Open FAQs page</a>
+    </div>
+    <div id=notify></div>
+    <script src="utils.js"></script>
+    <script src="ui.js"></script>
+    <script src="profile.js"></script>
+    <script src="proxy.js"></script>
+    <script src="pac.js"></script>
+    <script src="editor.js"></script>
+    <script src="toolbar.js"></script>
+  </body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Error Logs :: Proxy Switcher</title>
+  </head>
+  <body>
+    <style>
+      body {
+        font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+        font-size: 13px;
+      }
+      table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+      }
+      tr {
+        height: 24px;
+      }
+      tbody tr:nth-child(odd) {
+        background-color: #efefef;
+      }
+      th {
+        border: none !;
+      }
+      td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      td:not(:nth-child(2)) {
+        text-align: center;
+      }
+      td:nth-child(2) {
+        text-indent: 10px;
+      }
+    </style>
+    <table>
+      <colgroup>
+        <col width="60" style="border-right: solid 1px #ccc;">
+        <col style="border-right: solid 1px #ccc;">
+        <col width="200px">
+        <col width="120" style="border-left: solid 1px #ccc; border-right: solid 1px #ccc;">
+        <col width="120">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>URL</th>
+          <th>Status Line</th>
+          <th>IP Address</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <script src="index.js"></script>
+  </body>
+</html>

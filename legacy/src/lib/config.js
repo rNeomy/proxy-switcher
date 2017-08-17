@@ -104,5 +104,8 @@ config.links = {
   },
   get pac () {
     return 'http://blog.add0n.com/2016/02/11/configure-proxy-settings-in-firefox.html';
+  },
+  get webex () {
+    return 'https://addons.mozilla.org/firefox/addon/proxy-switcher-and-manager/';
   }
 }

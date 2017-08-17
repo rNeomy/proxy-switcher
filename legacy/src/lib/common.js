@@ -136,6 +136,10 @@ app.popup.receive('command', function (cmd) {
     app.popup.hide();
     app.tab.open(config.links.faq);
     break;
+  case 'webex-port':
+    app.popup.hide();
+    app.tab.open(config.links.webex);
+    break;
   case 'open-console':
     app.popup.hide();
     app.developer.HUDService.openBrowserConsoleOrFocus();

@@ -1,3 +1,4 @@
+/* globals require */
 'use strict';
 
 var unload = require('sdk/system/unload');
@@ -23,6 +24,9 @@ function update (id) {
 
 function observe (d) {
   if (d.statusCode < 200 || d.statusCode >= 400) {
+    if (d.statusCode === 101) { // https://github.com/rNeomy/proxy-switcher/issues/30#issuecomment-322780831
+      return;
+    }
     let windowId = d.browser._outerWindowID || (d.parentWindowId === -1 ? d.windowId : d.parentWindowId);
     if (cache[windowId]) {
       cache[windowId].errors.push({
