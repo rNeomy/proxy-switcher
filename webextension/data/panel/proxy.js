@@ -2,7 +2,6 @@
 'use strict';
 
 const isFirefox = /Firefox/.test(navigator.userAgent);
-document.body.dataset.firefox = isFirefox;
 
 if (isFirefox) {
   chrome.proxy = chrome.extension.getBackgroundPage().chrome.proxy;

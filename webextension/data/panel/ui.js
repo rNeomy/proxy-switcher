@@ -37,55 +37,52 @@ var ui = {
   }
 };
 
-document.addEventListener('click', (e) => {
+document.addEventListener('click', ({target, isTrusted}) => {
   // select radio buttons on focus
-  let id = e.target.getAttribute('for');
+  const id = target.getAttribute('for');
   if (id) {
-    let elem = document.getElementById(id);
+    const elem = document.getElementById(id);
     elem.checked = true;
     if (elem.dataset.mode) {
       app.emit('change-proxy', elem.dataset.mode);
     }
   }
   // change proxy type
-  let mode = e.target.dataset.mode;
-  if (mode && e.isTrusted) {
+  const mode = target.dataset.mode;
+  if (mode && isTrusted) {
     app.emit('change-proxy', mode);
   }
 });
 // change in manual tab
-(function (callback) {
+(function(callback) {
   ui.manual.parent.addEventListener('keyup', callback);
   ui.manual.parent.addEventListener('change', callback);
 })(() => {
-  let parent = ui.manual.parent;
+  const parent = ui.manual.parent;
 
   let changed = [
     ...parent.querySelectorAll('[type=text]'),
     ...parent.querySelectorAll('[type=number]'),
   ].reduce((p, c) => p || c.dataset.value !== c.value, false);
   changed = changed || [...parent.querySelectorAll('[type=radio]')]
-    .reduce((p, c) => p || c.checked + '' !== c.dataset.value, false);
+    .reduce((p, c) => p || String(c.checked) !== c.dataset.value, false);
   // profile name is mandatory
   changed = changed && ui.manual.profile.value;
   ui.manual.apply.disabled = !changed;
 });
 // change in pac url
-ui.pac.input.addEventListener('keyup', (e) => {
-  let target = e.target;
+ui.pac.input.addEventListener('keyup', ({target}) => {
   ui.pac.apply.disabled = !target || target.value === target.dataset.value;
 });
 // mirroring HTTP
-ui.manual.http.host.addEventListener('keyup', (e) => {
-  ui.manual.https.host.value = ui.manual.ftp.host.value = ui.manual.others.host.value = e.target.value;
+ui.manual.http.host.addEventListener('keyup', ({target}) => {
+  ui.manual.https.host.value = ui.manual.ftp.host.value = ui.manual.others.host.value = target.value;
 });
-ui.manual.http.port.addEventListener('keyup', (e) => {
-  ui.manual.https.port.value = ui.manual.ftp.port.value = ui.manual.others.port.value = e.target.value;
+ui.manual.http.port.addEventListener('keyup', ({target}) => {
+  ui.manual.https.port.value = ui.manual.ftp.port.value = ui.manual.others.port.value = target.value;
 });
 // updating from object
-app.on('update-manual-tab', config => {
-  let value = config.value;
-
+app.on('update-manual-tab', ({value}) => {
   ui.manual.others.host.dataset.value =
   ui.manual.others.host.value = value.rules.fallbackProxy ? value.rules.fallbackProxy.host : '';
   ui.manual.others.port.dataset.value =
@@ -109,7 +106,7 @@ app.on('update-manual-tab', config => {
   ui.manual.bypassList.dataset.value =
   ui.manual.bypassList.value = value.rules.bypassList ? value.rules.bypassList.join(', ') : '';
 
-  let scheme = Object.keys(value.rules).filter(k => k !== 'bypassList')
+  const scheme = Object.keys(value.rules).filter(k => k !== 'bypassList')
     .reduce((p, c) => p || value.rules[c].scheme, '') || 'http';
   [...ui.manual.parent.querySelectorAll('[type="radio"]')].forEach(r => {
     r.dataset.value = r.checked = r.value === scheme;
@@ -120,10 +117,10 @@ app.on('update-manual-tab', config => {
   }));
 });
 // searching profiles
-ui.manual.profile.addEventListener('keyup', e => {
-  let value = e.target.value;
-  let prefs = {};
-  let name = 'profile.' + value;
+ui.manual.profile.addEventListener('keyup', ({target, isTrusted}) => {
+  const value = target.value;
+  const prefs = {};
+  const name = 'profile.' + value;
   prefs[name] = false;
   chrome.storage.local.get(prefs, prefs => {
     if (prefs[name]) {
@@ -132,41 +129,42 @@ ui.manual.profile.addEventListener('keyup', e => {
     }
     ui.manual.delete.disabled = !prefs[name];
     // only change proxy if user wants to
-    if (e.isTrusted) {
+    if (isTrusted) {
       app.emit('change-proxy', 'fixed_servers');
     }
   });
 });
 // searching pacs
-ui.pac.input.addEventListener('keyup', e => {
-  let value = e.target.value;
+ui.pac.input.addEventListener('keyup', ({target, isTrusted}) => {
+  const value = target.value;
   chrome.storage.local.get({
     pacs: []
   }, prefs => {
-    let index = prefs.pacs.indexOf(value);
+    const index = prefs.pacs.indexOf(value);
     if (index !== -1) {
       ui.pac.input.dataset.value = value;
     }
     ui.pac.delete.disabled = index === -1;
     // only change proxy if user wants to
-    if (e.isTrusted) {
+    if (isTrusted) {
       app.emit('change-proxy', 'pac_script');
     }
   });
 });
 // pac_script -> script
-ui.pac.editor.addEventListener('change', (e) => {
+ui.pac.editor.addEventListener('change', ({target}) => {
   app.emit('change-proxy', 'pac_script');
   chrome.storage.local.set({
-    script: e.target.value
+    script: target.value
   });
 });
 // generating change event when datalist is clicked
-ui.manual.profiles.addEventListener('input', () => {
-  ui.manual.profile.dispatchEvent('keyup', {
+ui.manual.profile.addEventListener('input', () => {
+  ui.manual.profile.dispatchEvent(new Event('keyup', {
     bubbles: true
-  });
+  }));
 });
+
 ui.pac.urls.addEventListener('input', () => {
   ui.pac.input.dispatchEvent('keyup', {
     bubbles: true
@@ -174,10 +172,10 @@ ui.pac.urls.addEventListener('input', () => {
 });
 
 app.on('proxy-changed', mode => {
-  let tab = document.querySelector(`#tabs [data-mode="${mode}"]`);
-  let open = tab.dataset.open;
+  const tab = document.querySelector(`#tabs [data-mode="${mode}"]`);
+  const open = tab.dataset.open;
   if (open) {
-    let body = document.getElementById(open);
+    const body = document.getElementById(open);
     [...document.querySelectorAll('.body')].filter(b => b !== body)
       .forEach(b => b.classList.add('hide'));
     body.classList.remove('hide');
@@ -186,7 +184,7 @@ app.on('proxy-changed', mode => {
 });
 
 app.on('notify', msg => {
-  let div = document.createElement('div');
+  const div = document.createElement('div');
   div.textContent = (new Date()).toTimeString().split(' ')[0] + ': ' + msg;
   document.getElementById('notify').appendChild(div);
   window.setTimeout(() => document.getElementById('notify').removeChild(div), 2000);

@@ -216,7 +216,9 @@ a {
   display: none !important;
 }
 
-[no-firefox] {
-  opacity: 0.5;
-  pointer-events: none;
+@-moz-document url-prefix() {
+  [no-firefox] {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 }
