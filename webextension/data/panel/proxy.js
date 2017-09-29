@@ -2,10 +2,22 @@
 'use strict';
 
 const isFirefox = /Firefox/.test(navigator.userAgent);
-
 if (isFirefox) {
   chrome.proxy = chrome.extension.getBackgroundPage().chrome.proxy;
 }
+else {
+  const proxy = chrome.proxy.settings.set;
+  chrome.proxy.settings.set = function(config) {
+    delete config.value.remoteDNS;
+    proxy.apply(chrome.proxy.settings, arguments);
+  };
+}
+chrome.proxy.compare = (a, b) => {
+  const aValue = a.value;
+  const bValue = b.value;
+  return aValue.mode === bValue.mode &&
+    JSON.stringify(aValue.rules) === JSON.stringify(bValue.rules);
+};
 
 function update(callback = function() {}) {
   chrome.proxy.settings.get({}, ({value}) => {
@@ -50,20 +62,22 @@ function update(callback = function() {}) {
 update((mode, config) => {
   // fixed_servers
   if (mode === 'fixed_servers') {
-    app.emit('update-manual-tab', config);
     profile.search(config, name => {
       if (name) {
         ui.manual.profile.value = name;
       }
+      app.emit('update-manual-tab', config);
     });
   }
   else {
     chrome.storage.local.get('last-manual', prefs => {
       if (prefs['last-manual']) {
         ui.manual.profile.value = prefs['last-manual'];
-        ui.manual.profile.dispatchEvent(new Event('keyup', {
-          bubbles: true
-        }));
+
+        chrome.storage.local.get(null, prefs => {
+          const profile = prefs['profile.' + prefs['last-manual']];
+          app.emit('update-manual-tab', profile);
+        });
       }
     });
   }
@@ -139,6 +153,9 @@ proxy.manual = () => {
   if (bypassList.length) {
     value.rules.bypassList = bypassList;
   }
+
+  value.remoteDNS = ui.manual.remoteDNS.querySelector('input').checked;
+
   return {value};
 };
 proxy.pac = () => {

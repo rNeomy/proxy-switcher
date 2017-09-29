@@ -33,35 +33,35 @@
               <input type="text" name="product" list="profiles" placeholder="profile name is mandatory" data-value=""/>
               <datalist id="profiles"></datalist>
               <div class="modify">
-                <input type="button" disabled="true" data-cmd="delete-profile"><!--
-             --><input type="button" disabled="true" data-cmd="set-manual">
+                <input type="button" disabled data-cmd="delete-profile"><!--
+             --><input type="button" disabled data-cmd="set-manual">
               </div>
             </div>
           </td>
         </tr>
         <tr data-scheme="http">
           <td>HTTP Proxy:</td>
-          <td><input type="text" placeholder="0.0.0.0" data-value=""></td>
+          <td><input type="text" placeholder="0.0.0.0" value="127.0.0.1" data-value="127.0.0.1"></td>
           <td>Port:</td>
-          <td><input type="number" data-value=""></td>
+          <td><input type="number" value="8888" data-value="8888"></td>
         </tr>
         <tr data-scheme="https">
           <td>SSL Proxy:</td>
-          <td><input type="text" placeholder="0.0.0.0" data-value=""></td>
+          <td><input type="text" placeholder="0.0.0.0" value="127.0.0.1" data-value="127.0.0.1"></td>
           <td>Port:</td>
-          <td><input type="number" data-value=""></td>
+          <td><input type="number" value="8888" data-value="8888"></td>
         </tr>
         <tr data-scheme="ftp">
           <td>FTP Proxy:</td>
-          <td><input type="text" placeholder="0.0.0.0" data-value=""></td>
-          <td>Port:</td>
-          <td><input type="number" data-value=""</td>
-        </tr>
-        <tr data-scheme="others">
-          <td>Other Proxy:</td>
           <td><input type="text" placeholder="0.0.0.0" value="127.0.0.1" data-value="127.0.0.1"></td>
           <td>Port:</td>
           <td><input type="number" value="8888" data-value="8888"</td>
+        </tr>
+        <tr data-scheme="others">
+          <td>Fallback Proxy:</td>
+          <td><input type="text" placeholder="0.0.0.0" value="" data-value=""></td>
+          <td>Port:</td>
+          <td><input type="number" value="" data-value=""</td>
         </tr>
         <tr data-type="server-type">
           <td>Server Type:</td>
@@ -71,10 +71,9 @@
             <label><input type="radio" name="socks" value="socks4" data-value="false">SOCKS v4</label>
             <label><input type="radio" name="socks" value="socks5" checked data-value="true">SOCKS v5</label>
           </td>
-        </tr>
-        <tr>
-          <td>DNS:</td>
-          <td colspan="3"><label><input type="checkbox" data-value="false">Use remote DND resolver</label></td>
+          <td colspan="2" data-type="remote-dns" firefox>
+            <label><input type="checkbox" data-value="false">Remote DNS</label>
+          </td>
         </tr>
         <tr>
           <td>Direct:</td>

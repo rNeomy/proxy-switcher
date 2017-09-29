@@ -25,7 +25,8 @@ var ui = {
       port: document.querySelector('[data-scheme=others] input[type=number]')
     },
     type: document.querySelector('[data-type="server-type"]'),
-    bypassList: document.querySelector('[data-type="bypass-list"]')
+    bypassList: document.querySelector('[data-type="bypass-list"]'),
+    remoteDNS: document.querySelector('[data-type="remote-dns"]')
   },
   pac: {
     parent: document.getElementById('pac'),
@@ -53,83 +54,120 @@ document.addEventListener('click', ({target, isTrusted}) => {
     app.emit('change-proxy', mode);
   }
 });
-// change in manual tab
-(function(callback) {
-  ui.manual.parent.addEventListener('keyup', callback);
-  ui.manual.parent.addEventListener('change', callback);
-})(() => {
-  const parent = ui.manual.parent;
-
-  let changed = [
-    ...parent.querySelectorAll('[type=text]'),
-    ...parent.querySelectorAll('[type=number]'),
-  ].reduce((p, c) => p || c.dataset.value !== c.value, false);
-  changed = changed || [...parent.querySelectorAll('[type=radio]')]
-    .reduce((p, c) => p || String(c.checked) !== c.dataset.value, false);
-  // profile name is mandatory
-  changed = changed && ui.manual.profile.value;
-  ui.manual.apply.disabled = !changed;
-});
 // change in pac url
 ui.pac.input.addEventListener('keyup', ({target}) => {
   ui.pac.apply.disabled = !target || target.value === target.dataset.value;
 });
 // mirroring HTTP
-ui.manual.http.host.addEventListener('keyup', ({target}) => {
-  ui.manual.https.host.value = ui.manual.ftp.host.value = ui.manual.others.host.value = target.value;
+ui.manual.http.host.addEventListener('input', ({target}) => {
+  ui.manual.https.host.value = ui.manual.ftp.host.value = target.value;
 });
-ui.manual.http.port.addEventListener('keyup', ({target}) => {
-  ui.manual.https.port.value = ui.manual.ftp.port.value = ui.manual.others.port.value = target.value;
+ui.manual.http.port.addEventListener('input', ({target}) => {
+  ui.manual.https.port.value = ui.manual.ftp.port.value = target.value;
+});
+// change in manual tab
+(function(callback) {
+  ui.manual.parent.addEventListener('input', callback);
+  ui.manual.parent.addEventListener('change', callback);
+})(() => {
+  const parent = ui.manual.parent;
+  let changed = [
+    ...parent.querySelectorAll('[type=text]'),
+    ...parent.querySelectorAll('[type=number]'),
+  ].reduce((p, c) => p || c.dataset.value !== c.value, false);
+  changed = changed || [
+    ...parent.querySelectorAll('[type=radio]'),
+    ...parent.querySelectorAll('[type=checkbox]')
+  ].reduce((p, c) => p || String(c.checked) !== c.dataset.value, false);
+  // profile name is mandatory
+  changed = changed && ui.manual.profile.value;
+  ui.manual.apply.disabled = !changed;
+  // remote DNS
+  const scheme = ui.manual.type.querySelector(':checked').value;
+  ui.manual.remoteDNS.dataset.available = scheme.startsWith('socks');
+  if (!scheme.startsWith('socks')) {
+    const input = ui.manual.remoteDNS.querySelector('input');
+    input.checked = false;
+  }
 });
 // updating from object
 app.on('update-manual-tab', ({value}) => {
-  ui.manual.others.host.dataset.value =
-  ui.manual.others.host.value = value.rules.fallbackProxy ? value.rules.fallbackProxy.host : '';
-  ui.manual.others.port.dataset.value =
-  ui.manual.others.port.value = value.rules.fallbackProxy ? value.rules.fallbackProxy.port : '';
-
-  ui.manual.http.host.dataset.value =
-  ui.manual.http.host.value = value.rules.proxyForHttp ? value.rules.proxyForHttp.host : '';
-  ui.manual.http.port.dataset.value =
-  ui.manual.http.port.value = value.rules.proxyForHttp ? value.rules.proxyForHttp.port : '';
-
-  ui.manual.https.host.dataset.value =
-  ui.manual.https.host.value = value.rules.proxyForHttps ? value.rules.proxyForHttps.host : '';
-  ui.manual.https.port.dataset.value =
-  ui.manual.https.port.value = value.rules.proxyForHttps ? value.rules.proxyForHttps.port : '';
-
-  ui.manual.ftp.host.dataset.value =
-  ui.manual.ftp.host.value = value.rules.proxyForFtp ? value.rules.proxyForFtp.host : '';
-  ui.manual.ftp.port.dataset.value =
-  ui.manual.ftp.port.value = value.rules.proxyForFtp ? value.rules.proxyForFtp.port : '';
-
-  ui.manual.bypassList.dataset.value =
+  const rules = value.rules;
+  if (rules.fallbackProxy) {
+    ui.manual.others.host.value = rules.fallbackProxy.host;
+    ui.manual.others.port.value = rules.fallbackProxy.port;
+  }
+  else {
+    ui.manual.others.host.value = ui.manual.others.port.value = '';
+  }
+  if (rules.proxyForHttp) {
+    ui.manual.http.host.value = rules.proxyForHttp.host;
+    ui.manual.http.port.value = rules.proxyForHttp.port;
+  }
+  else {
+    ui.manual.http.host.value = ui.manual.http.port.value = '';
+  }
+  if (rules.proxyForHttps) {
+    ui.manual.https.host.value = rules.proxyForHttps.host;
+    ui.manual.https.port.value = rules.proxyForHttps.port;
+  }
+  else {
+    ui.manual.https.host.value = ui.manual.https.port.value = '';
+  }
+  if (rules.proxyForFtp) {
+    ui.manual.ftp.host.value = rules.proxyForFtp.host;
+    ui.manual.ftp.port.value = rules.proxyForFtp.port;
+  }
+  else {
+    ui.manual.ftp.host.value = ui.manual.ftp.port.value = '';
+  }
   ui.manual.bypassList.value = value.rules.bypassList ? value.rules.bypassList.join(', ') : '';
 
-  const scheme = Object.keys(value.rules).filter(k => k !== 'bypassList')
+  ui.manual.remoteDNS.querySelector('input').checked = value.remoteDNS;
+
+  const scheme = Object.keys(value.rules)
+    .filter(s => ['proxyForHttp', 'proxyForHttps', 'proxyForFtp', 'fallbackProxy'].indexOf(s) !== -1)
+    .sort()
+    .reverse()
     .reduce((p, c) => p || value.rules[c].scheme, '') || 'http';
+
   [...ui.manual.parent.querySelectorAll('[type="radio"]')].forEach(r => {
-    r.dataset.value = r.checked = r.value === scheme;
+    r.checked = r.value === scheme;
   });
 
-  ui.manual.profile.dispatchEvent(new Event('change', {
-    bubbles: true
-  }));
+  app.emit('reset-manual-tab');
 });
-// searching profiles
-ui.manual.profile.addEventListener('keyup', ({target, isTrusted}) => {
-  const value = target.value;
-  const prefs = {};
-  const name = 'profile.' + value;
-  prefs[name] = false;
-  chrome.storage.local.get(prefs, prefs => {
-    if (prefs[name]) {
-      ui.manual.profile.dataset.value = value;
-      app.emit('update-manual-tab', prefs[name]);
+app.on('reset-manual-tab', (exceptions = []) => {
+  [...ui.manual.parent.querySelectorAll('[data-value]')].forEach(e => {
+    if (exceptions.indexOf(e) !== -1) {
+      return;
     }
-    ui.manual.delete.disabled = !prefs[name];
-    // only change proxy if user wants to
-    if (isTrusted) {
+    if (e.type === 'radio' || e.type === 'checkbox') {
+      e.dataset.value = e.checked;
+    }
+    else {
+      e.dataset.value = e.value;
+    }
+  });
+  // updating delete button status
+  chrome.storage.local.get({
+    profiles: []
+  }, prefs => {
+    const exist = prefs.profiles.indexOf(ui.manual.profile.value) !== -1;
+    ui.manual.delete.disabled = !exist;
+  });
+  // updating apply button status
+  ui.manual.parent.dispatchEvent(new Event('change'));
+});
+
+// searching profiles
+ui.manual.profile.addEventListener('input', ({target}) => {
+  const value = target.value;
+
+  chrome.storage.local.get(null, prefs => {
+    const profile = prefs['profile.' + value];
+    if (profile) {
+      app.emit('update-manual-tab', profile);
       app.emit('change-proxy', 'fixed_servers');
     }
   });
@@ -157,12 +195,6 @@ ui.pac.editor.addEventListener('change', ({target}) => {
   chrome.storage.local.set({
     script: target.value
   });
-});
-// generating change event when datalist is clicked
-ui.manual.profile.addEventListener('input', () => {
-  ui.manual.profile.dispatchEvent(new Event('keyup', {
-    bubbles: true
-  }));
 });
 
 ui.pac.urls.addEventListener('input', () => {

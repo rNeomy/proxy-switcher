@@ -153,6 +153,10 @@ a {
 #manual td:nth-child(3) {
   text-align: center;
 }
+#manual [data-type="remote-dns"][data-available=false] {
+  opacity: 0.5;
+  pointer-events: none;
+}
 #others {
   display: flex;
   align-items: center;
@@ -215,10 +219,15 @@ a {
 .hide {
   display: none !important;
 }
-
+[firefox] {
+  display: none;
+}
 @-moz-document url-prefix() {
   [no-firefox] {
     opacity: 0.5;
     pointer-events: none;
+  }
+  [firefox] {
+    display: table-cell;
   }
 }

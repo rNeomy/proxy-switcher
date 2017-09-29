@@ -55,6 +55,7 @@ const shExpMatch = (url, pattern) => {
 };
 
 function FindProxyForURL(url, host) { //eslint-disable-line no-unused-vars
+  //browser.runtime.sendMessage({mode, url});
   if (mode === 'direct') {
     return 'DIRECT';
   }
@@ -78,7 +79,8 @@ function FindProxyForURL(url, host) { //eslint-disable-line no-unused-vars
   }
 }
 
-function o2o(rules, name) {
+function o2o(config, name) {
+  const rules = config.value.rules;
   let obj = rules[name];
   let useFallback = true;
   if (!obj && rules.fallbackProxy) {
@@ -93,10 +95,10 @@ function o2o(rules, name) {
     host: obj.host,
     port: obj.port
   };
-  rtn.proxyDNS = Boolean(obj.proxyDNS);
+  rtn.proxyDNS = Boolean(config.value.remoteDNS);
   if (rules.fallbackProxy && name !== 'fallbackProxy' && useFallback) {
     rtn.failover = rules.fallbackProxy;
-    rtn.failover.proxyDNS = Boolean(obj.proxyDNS);
+    rtn.failover.proxyDNS = Boolean(config.value.remoteDNS);
   }
   return [rtn];
 }
@@ -108,11 +110,15 @@ browser.runtime.onMessage.addListener(({method, config}) => {
       const rules = config.value.rules;
       proxy.bypassList = rules.bypassList || [];
 
-      proxy.http = o2o(rules, 'proxyForHttp');
-      proxy.https = o2o(rules, 'proxyForHttps');
-      proxy.ftp = o2o(rules, 'proxyForFtp');
-      proxy.other = o2o(rules, 'fallbackProxy');
-      browser.runtime.sendMessage(proxy);
+      proxy.http = o2o(config, 'proxyForHttp');
+      proxy.https = o2o(config, 'proxyForHttps');
+      proxy.ftp = o2o(config, 'proxyForFtp');
+      proxy.other = o2o(config, 'fallbackProxy');
+
+      //browser.runtime.sendMessage(proxy);
+    }
+    else {
+      mode = 'direct';
     }
   }
 });

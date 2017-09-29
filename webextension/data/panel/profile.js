@@ -19,9 +19,7 @@ document.addEventListener('click', ({target}) => {
           app.emit('profiles-updated');
           // updating buttons status
           ui.manual.profile.dataset.value = '';
-          ui.manual.profile.dispatchEvent(new Event('keyup', {
-            bubbles: true
-          }));
+          app.emit('reset-manual-tab', [ui.manual.profile]);
         });
       }
     });
@@ -39,18 +37,19 @@ document.addEventListener('click', ({target}) => {
         app.emit('profiles-updated');
         // updating buttons status
         ui.manual.profile.dataset.value = profile;
-        ui.manual.profile.dispatchEvent(new Event('keyup', {
-          bubbles: true
-        }));
+        app.emit('reset-manual-tab', [ui.manual.profile]);
       });
     });
   }
 });
 
 profile.search = (config, callback) => {
-  const json = JSON.stringify(config);
   chrome.storage.local.get(null, prefs => {
-    const name = (prefs.profiles || []).filter(p => JSON.stringify(prefs['profile.' + p]) === json).shift();
+    const name = (prefs.profiles || []).filter(p => {
+      const profile = prefs['profile.' + p];
+
+      return chrome.proxy.compare(profile, config);
+    }).shift();
     callback(name);
   });
 };

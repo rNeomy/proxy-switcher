@@ -33,21 +33,6 @@ function icon(config) {
 chrome.proxy.settings.get({}, icon);
 chrome.proxy.settings.onChange.addListener(icon);
 
-/* faqs */
-chrome.storage.local.get('version', prefs => {
-  const version = chrome.runtime.getManifest().version;
-  if (prefs.version !== version) {
-    window.setTimeout(() => {
-      chrome.storage.local.set({version}, () => {
-        chrome.tabs.create({
-          url: 'http://add0n.com/proxy-switcher.html?version=' + version + '&type=' +
-            (prefs.version ? ('upgrade&p=' + prefs.version) : 'install')
-        });
-      });
-    }, 3000);
-  }
-});
-
 /* badge */
 var tabs = {};
 
@@ -96,3 +81,25 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
     response(tabs[request.tabId]);
   }
 });
+
+// FAQs & Feedback
+chrome.storage.local.get({
+  'version': null,
+  'faqs': navigator.userAgent.indexOf('Firefox') === -1
+}, prefs => {
+  const version = chrome.runtime.getManifest().version;
+
+  if (prefs.version ? (prefs.faqs && prefs.version !== version) : true) {
+    chrome.storage.local.set({version}, () => {
+      chrome.tabs.create({
+        url: 'http://add0n.com/proxy-switcher.html?version=' + version +
+          '&type=' + (prefs.version ? ('upgrade&p=' + prefs.version) : 'install')
+      });
+    });
+  }
+});
+
+{
+  const {name, version} = chrome.runtime.getManifest();
+  chrome.runtime.setUninstallURL('http://add0n.com/feedback.html?name=' + name + '&version=' + version);
+}

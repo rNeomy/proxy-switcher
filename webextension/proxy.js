@@ -57,3 +57,4 @@ browser.proxy.onProxyError.addListener(error => {
   console.error(`Proxy error: ${error.message}`);
 });
 */
+//chrome.runtime.onMessage.addListener(r => console.log(r))
