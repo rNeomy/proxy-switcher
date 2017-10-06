@@ -69,7 +69,10 @@ chrome.webRequest.onCompleted.addListener(d => {
 }, {urls: ['*://*/*']});
 chrome.webRequest.onErrorOccurred.addListener(d => {
   const tabId = d.tabId;
-  if (tabId && tabs[tabId] && d.error !== 'net::ERR_BLOCKED_BY_CLIENT') {
+  if (tabId && tabs[tabId] &&
+    d.error !== 'net::ERR_BLOCKED_BY_CLIENT' &&
+    d.error !== 'NS_ERROR_ABORT'
+  ) {
     tabs[tabId].push(d);
     badge(tabId);
   }

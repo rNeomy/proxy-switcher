@@ -3,7 +3,7 @@
   "short_name": "ipswitcher",
   "description": "Manage and switch between multiple proxies quickly and easily through profiles",
   "author": "Richard Neomy",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "manifest_version": 2,
   "default_locale": "en",
   "permissions": [
@@ -35,6 +35,7 @@
   },
   "applications": {
     "gecko": {
+      "id": "{e4a12b8a-ab12-449a-b70e-4f54ccaf235e}",
       "strict_min_version": "57.0a1"
     }
   }
