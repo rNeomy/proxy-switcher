@@ -39,15 +39,14 @@ if (/Firefox/.test(navigator.userAgent)) {
       });
     }
     else {
-      register('/data/pac.js');
-      browser.runtime.sendMessage({
+      register('/data/pac.js').then(() => browser.runtime.sendMessage({
         method: 'register-proxy',
         config
       }, {toProxyScript: true}, () => {
         chrome.storage.local.set({
           'ffcurent': config
         }, callback);
-      });
+      }));
     }
   };
   chrome.proxy.settings.get({}, chrome.proxy.settings.set);

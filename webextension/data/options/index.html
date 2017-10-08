@@ -1,0 +1,33 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Proxy Switcher and Manager :: Options</title>
+  </head>
+  <body>
+    <style>
+      body { padding: 10px; }
+      table {width: 100%;}
+    </style>
+    <table>
+      <tr>
+        <td>Badge color</td>
+        <td><input type="color" id="color"></td>
+      </tr>
+      <tr>
+        <td>Badge counter<sup>1</sup></td>
+        <td><input type="checkbox" id="counter"></td>
+      </tr>
+    </table>
+
+    <p>
+      1: Display resource errors of the current page in badge area
+    </p>
+    <div>
+      <button id="reset">Reset</button>
+      <button id="save">Save</button>
+      <span id="status"></span>
+    </div>
+    <script src="index.js"></script>
+  </body>
+</html>

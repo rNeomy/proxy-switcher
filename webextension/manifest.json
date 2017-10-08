@@ -33,6 +33,10 @@
     "48": "data/icons/48.png",
     "128": "data/icons/128.png"
   },
+  "options_ui": {
+    "page": "data/options/index.html",
+    "chrome_style": true
+  },
   "applications": {
     "gecko": {
       "id": "{e4a12b8a-ab12-449a-b70e-4f54ccaf235e}",

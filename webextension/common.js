@@ -2,6 +2,33 @@
 
 var _ = chrome.i18n.getMessage;
 
+var prefs = {
+  color: '#666666',
+  counter: true
+};
+chrome.storage.local.get(prefs, ps => {
+  Object.assign(prefs, ps);
+  chrome.browserAction.setBadgeBackgroundColor({
+    color: prefs.color
+  });
+});
+chrome.storage.onChanged.addListener(ps => {
+  if (ps.counter) {
+    prefs.counter = ps.counter.newValue;
+  }
+  if (ps.color) {
+    chrome.browserAction.setBadgeBackgroundColor({
+      color: ps.color.newValue
+    });
+  }
+  if (ps.counter && ps.counter.newValue === false) {
+    chrome.tabs.query({}, tabs => tabs.forEach(tab => chrome.browserAction.setBadgeText({
+      tabId: tab.id,
+      text: ''
+    })));
+  }
+});
+
 /* icon color */
 function icon(config) {
   let mode = config.value.mode;
@@ -69,7 +96,7 @@ chrome.webRequest.onCompleted.addListener(d => {
 }, {urls: ['*://*/*']});
 chrome.webRequest.onErrorOccurred.addListener(d => {
   const tabId = d.tabId;
-  if (tabId && tabs[tabId] &&
+  if (tabId && tabs[tabId] && prefs.counter &&
     d.error !== 'net::ERR_BLOCKED_BY_CLIENT' &&
     d.error !== 'NS_ERROR_ABORT'
   ) {
