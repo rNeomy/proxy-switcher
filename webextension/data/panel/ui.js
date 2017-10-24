@@ -6,6 +6,7 @@ var ui = {
     parent: document.getElementById('manual'),
     profile: document.querySelector('#manual [list="profiles"]'),
     profiles: document.querySelector('#profiles'),
+    selector: document.querySelector('#selector'),
     delete: document.querySelector('#manual .modify input:first-child'),
     apply: document.querySelector('#manual .modify input:last-child'),
     http: {
@@ -69,7 +70,10 @@ ui.manual.http.port.addEventListener('input', ({target}) => {
 (function(callback) {
   ui.manual.parent.addEventListener('input', callback);
   ui.manual.parent.addEventListener('change', callback);
-})(() => {
+})(e => {
+  if (e.target === ui.manual.selector) {
+    return;
+  }
   const parent = ui.manual.parent;
   let changed = [
     ...parent.querySelectorAll('[type=text]'),
@@ -89,6 +93,8 @@ ui.manual.http.port.addEventListener('input', ({target}) => {
     const input = ui.manual.remoteDNS.querySelector('input');
     input.checked = false;
   }
+
+  ui.manual.selector.value = changed ? '' : ui.manual.profile.value;
 });
 // updating from object
 app.on('update-manual-tab', ({value}) => {

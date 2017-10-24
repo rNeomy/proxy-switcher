@@ -54,15 +54,22 @@ profile.search = (config, callback) => {
   });
 };
 
+ui.manual.selector.addEventListener('change', ({target}) => {
+  ui.manual.profile.value = target.value;
+  ui.manual.profile.dispatchEvent(new Event('input'));
+});
 // updating manual -> profiles
 app.on('profiles-updated', () => chrome.storage.local.get({
   profiles: []
 }, prefs => {
   ui.manual.profiles.textContent = '';
+  ui.manual.selector.textContent = '';
+
   prefs.profiles.forEach(profile => {
     const option = document.createElement('option');
-    option.value = profile;
-    ui.manual.profiles.appendChild(option);
+    option.textContent = option.value = profile;
+    ui.manual.selector.appendChild(option);
+    ui.manual.profiles.appendChild(option.cloneNode(false));
   });
 }));
 app.emit('profiles-updated');

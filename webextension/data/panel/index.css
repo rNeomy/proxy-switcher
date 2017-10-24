@@ -31,6 +31,7 @@ input[type=text] {
   box-sizing: border-box;
   height: 24px;
   line-height: 24px;
+  border-radius: 0;
 }
 input[type=number],
 input[type=text] {
@@ -47,6 +48,37 @@ td {
 }
 a {
   outline: none;
+}
+select {
+  width: 30px;
+  margin-left: -30px;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: url('arrow_down.svg') center center no-repeat;
+  background-size: 10px;
+  color: transparent;
+  border-radius: 0;
+  border: none;
+  color: #000;
+  text-indent: 100px;
+}
+select:empty {
+  display: none;
+}
+select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 #000;
+}
+datalist {
+  display: none;
+}
+input::-webkit-calendar-picker-indicator {
+  display: none;
+}
+option {
+  border: none;
+  box-shadow: none;
 }
 
 #toolbar {

@@ -3,7 +3,7 @@
   "short_name": "ipswitcher",
   "description": "Manage and switch between multiple proxies quickly and easily through profiles",
   "author": "Richard Neomy",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "manifest_version": 2,
   "default_locale": "en",
   "permissions": [

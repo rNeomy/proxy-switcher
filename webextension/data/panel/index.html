@@ -32,9 +32,10 @@
             <div class="flex">
               <input type="text" name="product" list="profiles" placeholder="profile name is mandatory" data-value=""/>
               <datalist id="profiles"></datalist>
+              <select id="selector"></select>
               <div class="modify">
-                <input type="button" disabled data-cmd="delete-profile"><!--
-             --><input type="button" disabled data-cmd="set-manual">
+                <input type="button" disabled data-cmd="delete-profile" title="Delete this profile"><!--
+             --><input type="button" disabled data-cmd="set-manual" title="Save as a new profile&#013;&#013;To have multiple profiles, just change the profile name and press on this save button">
               </div>
             </div>
           </td>
@@ -126,7 +127,7 @@
     </div>
     <div class="body" id="others">No more settings! You are set!</div>
     <div id="tools">
-      <b>Tools:</b><a href="http://tools.add0n.com/what-is-my-ip.php" target="_blank">Check external IP</a> | <a href="https://ipleak.net" target="_blank">Check DNS Leackage</a> | <a href="http://add0n.com/proxy-switcher.html" target="_blank">Open FAQs page</a>
+      <b>Tools:</b><a href="http://tools.add0n.com/what-is-my-ip.php" target="_blank">Check external IP</a> | <a href="https://ipleak.net" target="_blank">Check DNS Leackage</a> | <a href="http://add0n.com/proxy-switcher.html" target="_blank">Open FAQs page</a> | <a href="#" data-cmd="open-options">Options</a>
     </div>
     <div id=notify></div>
     <script src="utils.js"></script>

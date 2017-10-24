@@ -34,6 +34,9 @@ document.addEventListener('click', ({target}) => {
       }
     });
   }
+  else if (cmd === 'open-options') {
+    chrome.runtime.openOptionsPage();
+  }
 });
 
 app.on('pacs-updated', () => {
