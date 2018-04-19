@@ -3,12 +3,19 @@
 
 const isFirefox = /Firefox/.test(navigator.userAgent);
 if (isFirefox) {
-  chrome.proxy = chrome.extension.getBackgroundPage().chrome.proxy;
+  const bg = chrome.extension.getBackgroundPage();
+  if (bg) {
+    chrome.proxy = chrome.extension.getBackgroundPage().chrome.proxy;
+  }
+  else {
+    app.notify('To change proxy settings, open popup in a normal browser window!', () => window.close());
+  }
 }
 else {
   const proxy = chrome.proxy.settings.set;
   chrome.proxy.settings.set = function(config) {
     delete config.value.remoteDNS;
+    delete config.value.noPrompt;
     proxy.apply(chrome.proxy.settings, arguments);
   };
 }
@@ -83,12 +90,13 @@ update((mode, config) => {
   }
   // pac_script
   if (mode === 'pac_script') {
-    if (config.value.pacScript.url) {
+    if (config.value.pacScript.url || isFirefox) {
       ui.pac.parent.querySelector('[name="pac"][value="url"]').checked = true;
       ui.pac.input.dataset.value = ui.pac.input.value = config.value.pacScript.url;
       ui.pac.input.dispatchEvent(new Event('keyup'));
     }
-    if (config.value.pacScript.data) {
+    else if (config.value.pacScript.data) {
+      console.log('FFFF');
       ui.pac.parent.querySelector('[name="pac"][value="data"]').checked = true;
       ui.pac.editor.value = config.value.pacScript.data;
     }
@@ -96,7 +104,7 @@ update((mode, config) => {
   chrome.storage.local.get({
     'last-pac': false,
     'script': false,
-    'pac-type': 'data'
+    'pac-type': isFirefox ? 'url' : 'data'
   }, prefs => {
     if (prefs['last-pac'] && (mode !== 'pac_script' || !config.value.pacScript.url)) {
       ui.pac.input.dataset.value = ui.pac.input.value = prefs['last-pac'];
@@ -154,7 +162,8 @@ proxy.manual = () => {
     value.rules.bypassList = bypassList;
   }
 
-  value.remoteDNS = ui.manual.remoteDNS.querySelector('input').checked;
+  value.remoteDNS = ui.manual.remoteDNS.checked;
+  value.noPrompt = ui.manual.noPrompt.checked;
 
   return {value};
 };
@@ -199,6 +208,10 @@ app.on('change-proxy', mode => {
     // change tab if necessary
     app.emit('proxy-changed', mode);
   }
+});
+
+chrome.proxy.onProxyError.addListener(e => {
+  app.emit('notify', e.message || e);
 });
 
 document.addEventListener('click', ({target}) => {

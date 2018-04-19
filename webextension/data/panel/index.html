@@ -2,6 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="index.css">
   </head>
   <body>
@@ -10,10 +11,10 @@
     </div>
     <ul id="tabs">
       <label><input type="radio" name="tabs"><li data-mode="direct" class="no-proxy" data-open="others">Direct</li></label>
-      <label no-firefox><input type="radio" name="tabs"><li data-mode="auto_detect" class="auto-proxy" data-open="others">Auto-detect</li></label>
+      <label><input type="radio" name="tabs"><li data-mode="auto_detect" class="auto-proxy" data-open="others">Auto-detect</li></label>
       <label><input type="radio" name="tabs"><li data-mode="system" class="system-proxy" data-open="others">System Proxy</li></label>
       <label><input type="radio" name="tabs"><li data-mode="fixed_servers" class="manual-proxy" data-open="manual">Manual Proxy</li></label>
-      <label no-firefox><input type="radio" name="tabs"><li data-mode="pac_script" class="pac-proxy" data-open="pac">PAC Script</li></label>
+      <label><input type="radio" name="tabs"><li data-mode="pac_script" class="pac-proxy" data-open="pac">PAC Script</li></label>
       <div>
         <input type="button" value="Error Log" data-cmd="open-failed-resources" class="hide">
       </div>
@@ -72,8 +73,14 @@
             <label><input type="radio" name="socks" value="socks4" data-value="false">SOCKS v4</label>
             <label><input type="radio" name="socks" value="socks5" checked data-value="true">SOCKS v5</label>
           </td>
-          <td colspan="2" data-type="remote-dns" firefox>
-            <label><input type="checkbox" data-value="false">Remote DNS</label>
+          <td colspan="2" firefox>
+            <div style="text-align: left;">
+              <label title="Proxy DNS when using SOCKS v5">
+                <input type="checkbox" data-type="remote-dns" data-value="false">Remote DNS
+              </label>
+              <br>
+              <label title="Do not prompt for authentication if password is saved"><input type="checkbox" data-type="no-prompt" data-value="false">No Prompt</label>
+            </div>
           </td>
         </tr>
         <tr>
@@ -82,50 +89,42 @@
         </tr>
       </table>
     </div>
-    <div id="pac" class="body">
+    <div id="pac" class="body flex vbox">
       Automatic proxy configuration
-      <table>
-        <colgroup>
-          <col width="50">
-          <col>
-        </colgroup>
-        <tr>
-          <td><label><input id="pac-1" type="radio" name="pac" value="url" data-mode="pac_script">URL</label></td>
-          <td>
-            <div class="flex">
-              <input type="text" placeholder="http://..." for="pac-1" list="pacs" data-value="">
-              <datalist id="pacs"></datalist>
-              <div class="modify">
-                <input type="button" disabled="true" data-cmd="delete-pac"><!--
-             --><input type="button" disabled="true" data-cmd="set-pac">
-              </div>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td><label><input id="pac-2" type="radio" name="pac" value="data" data-mode="pac_script">Inline</label></td>
-          <td class="flex" style="height: 100%">
-            <textarea id="editor" for="pac-2">function FindProxyForURL (url, host) {
-	// our local URLs from the domains below example.com don't need a proxy:
-	if (shExpMatch(host, "*.example.com")) {
-		return "DIRECT";
-	}
 
-	// URLs within this network are accessed through
-	// port 8080 on fastproxy.example.com:
-	if (isInNet(host, "10.0.0.0", "255.255.248.0")) {
-		return "PROXY fastproxy.example.com:8080";
-	}
+      <div class="flex nowrap" style="margin: 5px 0;">
+        <label><input id="pac-1" type="radio" name="pac" value="url" data-mode="pac_script">URL</label>
+        <div class="flex wide">
+          <input type="text" placeholder="http://..." for="pac-1" list="pacs" data-value="http://example.com/sample.pac" value="http://example.com/sample.pac">
+          <datalist id="pacs"></datalist>
+          <div class="modify">
+            <input type="button" disabled="true" data-cmd="delete-pac"><!--
+         --><input type="button" disabled="true" data-cmd="set-pac">
+          </div>
+        </div>
+      </div>
+      <div class="flex nowrap wide" no-firefox>
+        <label><input id="pac-2" type="radio" name="pac" value="data" data-mode="pac_script">Inline</label>
+        <div class="wide"><textarea id="editor" for="pac-2">function FindProxyForURL (url, host) {
+  // our local URLs from the domains below example.com don't need a proxy:
+  if (shExpMatch(host, "*.example.com")) {
+    return "DIRECT";
+  }
 
-	// All other requests go through port 8080 of proxy.example.com.
-	// should that fail to respond, go directly to the WWW:
-	return "PROXY proxy.example.com:8080; DIRECT";
-}</textarea>
-          </td>
-        </tr>
-      </table>
+  // URLs within this network are accessed through
+  // port 8080 on fastproxy.example.com:
+  if (isInNet(host, "10.0.0.0", "255.255.248.0")) {
+    return "PROXY fastproxy.example.com:8080";
+  }
+
+  // All other requests go through port 8080 of proxy.example.com.
+  // should that fail to respond, go directly to the WWW:
+  return "PROXY proxy.example.com:8080; DIRECT";
+}</textarea></div>
+      </div>
     </div>
     <div class="body" id="others">No more settings! You are set!</div>
+    <div id="explore"></div>
     <div id="tools">
       <b>Tools:</b><a href="http://tools.add0n.com/what-is-my-ip.php" target="_blank">Check external IP</a> | <a href="https://ipleak.net" target="_blank">Check DNS Leackage</a> | <a href="http://add0n.com/proxy-switcher.html" target="_blank">Open FAQs page</a> | <a href="#" data-cmd="open-options">Options</a>
     </div>
@@ -137,5 +136,6 @@
     <script src="pac.js"></script>
     <script src="editor.js"></script>
     <script src="toolbar.js"></script>
+    <script async src="explore.js"></script>
   </body>
 </html>

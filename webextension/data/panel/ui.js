@@ -27,7 +27,8 @@ var ui = {
     },
     type: document.querySelector('[data-type="server-type"]'),
     bypassList: document.querySelector('[data-type="bypass-list"]'),
-    remoteDNS: document.querySelector('[data-type="remote-dns"]')
+    remoteDNS: document.querySelector('[data-type="remote-dns"]'),
+    noPrompt: document.querySelector('[data-type="no-prompt"]')
   },
   pac: {
     parent: document.getElementById('pac'),
@@ -88,10 +89,9 @@ ui.manual.http.port.addEventListener('input', ({target}) => {
   ui.manual.apply.disabled = !changed;
   // remote DNS
   const scheme = ui.manual.type.querySelector(':checked').value;
-  ui.manual.remoteDNS.dataset.available = scheme.startsWith('socks');
+  ui.manual.remoteDNS.parentNode.dataset.available = scheme === 'socks5';
   if (!scheme.startsWith('socks')) {
-    const input = ui.manual.remoteDNS.querySelector('input');
-    input.checked = false;
+    ui.manual.remoteDNS.checked = false;
   }
 
   ui.manual.selector.value = changed ? '' : ui.manual.profile.value;
@@ -129,7 +129,8 @@ app.on('update-manual-tab', ({value}) => {
   }
   ui.manual.bypassList.value = value.rules.bypassList ? value.rules.bypassList.join(', ') : '';
 
-  ui.manual.remoteDNS.querySelector('input').checked = value.remoteDNS;
+  ui.manual.remoteDNS.checked = value.remoteDNS;
+  ui.manual.noPrompt.checked = value.noPrompt;
 
   const scheme = Object.keys(value.rules)
     .filter(s => ['proxyForHttp', 'proxyForHttps', 'proxyForFtp', 'fallbackProxy'].indexOf(s) !== -1)

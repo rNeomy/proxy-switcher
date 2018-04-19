@@ -6,8 +6,23 @@
   </head>
   <body>
     <style>
-      body { padding: 10px; }
+      body {
+        min-width: 400px;
+        padding: 10px;
+      }
       table {width: 100%;}
+      hr {
+        border: none;
+        border-top: dashed 1px #ccc;
+        padding: 0;
+        margin: 0;
+      }
+      td:last-child {
+        text-align: right;
+      }
+      button:not(:first-child) {
+        margin-left: 6px;
+      }
     </style>
     <table>
       <tr>
@@ -20,13 +35,25 @@
       </tr>
     </table>
 
-    <p>
-      1: Display resource errors of the current page in badge area
+    <p style="display: flex; align-items: flex-end;">
+
     </p>
-    <div>
+    <p style="display: flex;">
+      <button id="import">Import<sup>2</sup></button>
+      <button id="export">Export</button>
+      <span style="flex: 1;"></span>
       <button id="reset">Reset</button>
       <button id="save">Save</button>
       <span id="status"></span>
+    </p>
+    <hr>
+    <p>
+      1: Display resource errors of the current page in the badge area
+      <br>
+      2: Importing will overwrite the current user-defined profiles (do an export before importing)
+    </p>
+    <div>
+      <button id="support">Support Development</button>
     </div>
     <script src="index.js"></script>
   </body>

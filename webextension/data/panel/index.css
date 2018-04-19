@@ -1,15 +1,12 @@
 body {
-  font-size: 13px;
-  font-family: 'Lato',Arial,Helvetica,sans-serif;
+  font: 400 13px/24px Roboto,sans-serif;
   background-color: #eee;
   display: flex;
   flex-direction: column;
   padding: 0;
   margin: 0;
   font-size: 12px;
-
   width: 505px;
-  height: 400px;
 }
 h1 {
   color: #4877cb;
@@ -32,6 +29,9 @@ input[type=text] {
   height: 24px;
   line-height: 24px;
   border-radius: 0;
+}
+input[type=button] {
+  font-size: 11px;
 }
 input[type=number],
 input[type=text] {
@@ -173,11 +173,8 @@ option {
   resize: none;
   text-indent: 0;
 }
-#pac table {
-  height: calc(100% - 20px);
-}
-#pac tr:last-child {
-  height: 100%;
+#pac label {
+  min-width: 60px;
 }
 #pac textarea {
   line-height: normal;
@@ -185,7 +182,7 @@ option {
 #manual td:nth-child(3) {
   text-align: center;
 }
-#manual [data-type="remote-dns"][data-available=false] {
+[data-available=false] {
   opacity: 0.5;
   pointer-events: none;
 }
@@ -213,6 +210,7 @@ option {
   flex: 1;
   z-index: 2;
   padding: 10px;
+  min-height: 220px;
 }
 .modify input {
   display: inline-block;
@@ -247,6 +245,15 @@ option {
 }
 .flex {
   display: flex;
+}
+.vbox {
+  flex-direction: column;
+}
+.nowrap {
+  white-space: nowrap;
+}
+.wide {
+  flex: 1;
 }
 .hide {
   display: none !important;

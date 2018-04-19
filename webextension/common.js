@@ -40,7 +40,9 @@ function icon(config) {
   chrome.browserAction.setIcon({
     path: {
       18: 'data/icons/toolbar/' + mode + '/18.png',
-      36: 'data/icons/toolbar/' + mode + '/36.png'
+      19: 'data/icons/toolbar/' + mode + '/19.png',
+      36: 'data/icons/toolbar/' + mode + '/36.png',
+      38: 'data/icons/toolbar/' + mode + '/38.png'
     }
   });
   let title = 'Proxy Switcher\n\n';
@@ -72,6 +74,7 @@ function badge(tabId) {
     tabId,
     text: tabs[tabId] && tabs[tabId].length ? String(tabs[tabId].length) : ''
   });
+  chrome.runtime.lastError;
 }
 chrome.webRequest.onBeforeRequest.addListener(({tabId}) => {
   if (tabs[tabId]) {
@@ -115,21 +118,34 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
 // FAQs & Feedback
 chrome.storage.local.get({
   'version': null,
-  'faqs': navigator.userAgent.indexOf('Firefox') === -1
+  'faqs': true,
+  'last-update': 0,
 }, prefs => {
   const version = chrome.runtime.getManifest().version;
 
   if (prefs.version ? (prefs.faqs && prefs.version !== version) : true) {
-    chrome.storage.local.set({version}, () => {
-      chrome.tabs.create({
-        url: 'http://add0n.com/proxy-switcher.html?version=' + version +
-          '&type=' + (prefs.version ? ('upgrade&p=' + prefs.version) : 'install')
-      });
+    const now = Date.now();
+    const doUpdate = (now - prefs['last-update']) / 1000 / 60 / 60 / 24 > 30;
+    chrome.storage.local.set({
+      version,
+      'last-update': doUpdate ? Date.now() : prefs['last-update']
+    }, () => {
+      // do not display the FAQs page if last-update occurred less than 30 days ago.
+      if (doUpdate) {
+        const p = Boolean(prefs.version);
+        chrome.tabs.create({
+          url: chrome.runtime.getManifest().homepage_url + '?version=' + version +
+            '&type=' + (p ? ('upgrade&p=' + prefs.version) : 'install'),
+          active: p === false
+        });
+      }
     });
   }
 });
 
 {
   const {name, version} = chrome.runtime.getManifest();
-  chrome.runtime.setUninstallURL('http://add0n.com/feedback.html?name=' + name + '&version=' + version);
+  chrome.runtime.setUninstallURL(
+    chrome.runtime.getManifest().homepage_url + '?rd=feedback&name=' + name + '&version=' + version
+  );
 }

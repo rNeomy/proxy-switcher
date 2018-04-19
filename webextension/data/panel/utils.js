@@ -24,3 +24,10 @@ app.emit = (id, value) => {
 };
 
 var _ = chrome.i18n.getMessage;
+
+app.notify = (e, callback) => chrome.notifications.create({
+  type: 'basic',
+  iconUrl: '/data/icons/48.png',
+  title: 'Proxy Switcher and Manager',
+  message: e.message || e,
+}, callback);
