@@ -59,8 +59,25 @@ function icon(config) {
 
   chrome.browserAction.setTitle({title});
 }
-chrome.proxy.settings.get({}, icon);
-chrome.proxy.settings.onChange.addListener(icon);
+
+if (/Firefox/.test(navigator.userAgent)) {
+  chrome.storage.onChanged.addListener(ps => {
+    if (ps['ffcurent']) {
+      icon(ps['ffcurent'].newValue);
+    }
+  });
+  chrome.storage.local.get({
+    'ffcurent': {
+      value: {
+        mode: 'system'
+      }
+    }
+  }, prefs => icon(prefs['ffcurent']));
+}
+else {
+  chrome.proxy.settings.get({}, icon);
+  chrome.proxy.settings.onChange.addListener(icon);
+}
 
 /* badge */
 var tabs = {};

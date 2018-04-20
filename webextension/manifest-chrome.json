@@ -3,15 +3,15 @@
   "short_name": "proxy-switcher",
   "description": "Manage and switch between multiple proxies quickly and easily through profiles",
   "author": "Richard Neomy",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "manifest_version": 2,
   "default_locale": "en",
   "permissions": [
     "storage",
     "notifications",
+    "proxy",
     "*://*/*",
-    "webRequest",
-    "browserSettings"
+    "webRequest"
   ],
   "browser_action": {
     "default_icon": {
@@ -35,11 +35,5 @@
   "options_ui": {
     "page": "data/options/index.html",
     "chrome_style": true
-  },
-  "applications": {
-    "gecko": {
-      "id": "{e4a12b8a-ab12-449a-b70e-4f54ccaf235e}",
-      "strict_min_version": "59.0"
-    }
   }
 }

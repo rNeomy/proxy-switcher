@@ -226,5 +226,5 @@ app.on('notify', msg => {
   const div = document.createElement('div');
   div.textContent = (new Date()).toTimeString().split(' ')[0] + ': ' + msg;
   document.getElementById('notify').appendChild(div);
-  window.setTimeout(() => document.getElementById('notify').removeChild(div), 2000);
+  window.setTimeout(() => document.getElementById('notify').removeChild(div), 5000);
 });

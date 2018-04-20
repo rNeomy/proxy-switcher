@@ -75,6 +75,7 @@ if (/Firefox/.test(navigator.userAgent)) {
       proxySettings.proxyType = 'autoConfig';
       proxySettings.autoConfigUrl = config.value.pacScript.url;
     }
+
     browser.browserSettings.proxyConfig.set({value: proxySettings}, () => {
       const lastError = chrome.runtime.lastError;
       if (chrome.runtime.lastError) {
@@ -88,11 +89,4 @@ if (/Firefox/.test(navigator.userAgent)) {
       }
     }, callback);
   };
-  chrome.proxy.settings.get(null, chrome.proxy.settings.set);
 }
-
-//browser.proxy.onProxyError.addListener(error => {
-//  console.error(`Proxy error: ${error.message}`);
-//});
-
-//chrome.runtime.onMessage.addListener(r => console.log(r))

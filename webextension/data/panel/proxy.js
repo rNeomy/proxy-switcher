@@ -2,16 +2,7 @@
 'use strict';
 
 const isFirefox = /Firefox/.test(navigator.userAgent);
-if (isFirefox) {
-  const bg = chrome.extension.getBackgroundPage();
-  if (bg) {
-    chrome.proxy = chrome.extension.getBackgroundPage().chrome.proxy;
-  }
-  else {
-    app.notify('To change proxy settings, open popup in a normal browser window!', () => window.close());
-  }
-}
-else {
+if (isFirefox === false) {
   const proxy = chrome.proxy.settings.set;
   chrome.proxy.settings.set = function(config) {
     delete config.value.remoteDNS;
