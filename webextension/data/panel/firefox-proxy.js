@@ -44,21 +44,28 @@ if (/Firefox/.test(navigator.userAgent)) {
       proxySettings.proxyType = 'manual';
 
       if (rules.proxyForHttp.scheme.startsWith('socks')) {
-        proxySettings.socks = rules.proxyForHttps.host + ':' + rules.proxyForHttps.port;
+        proxySettings.socks = (rules.proxyForHttps.host + ':' + rules.proxyForHttps.port)
+          .replace(/.*:\/\//, '');
         proxySettings.socksVersion = rules.proxyForHttp.scheme === 'socks5' ? 5 : 4;
       }
       else {
-        proxySettings.ftp = (rules.proxyForFtp.host + ':' + rules.proxyForFtp.port).trim();
-        if (proxySettings.ftp.startsWith('http') === false) {
-          proxySettings.ftp = rules.proxyForFtp.scheme + '://' + proxySettings.ftp;
+        if (rules.proxyForFtp.host && rules.proxyForFtp.port) {
+          proxySettings.ftp = (rules.proxyForFtp.host + ':' + rules.proxyForFtp.port).trim();
+          if (proxySettings.ftp.indexOf('://') === -1) {
+            proxySettings.ftp = rules.proxyForFtp.scheme + '://' + proxySettings.ftp;
+          }
         }
-        proxySettings.http = (rules.proxyForHttp.host + ':' + rules.proxyForHttp.port).trim();
-        if (proxySettings.http.startsWith('http') === false) {
-          proxySettings.http = rules.proxyForHttp.scheme + '://' + proxySettings.http;
+        if (rules.proxyForHttp.host && rules.proxyForHttp.port) {
+          proxySettings.http = (rules.proxyForHttp.host + ':' + rules.proxyForHttp.port).trim();
+          if (proxySettings.http.indexOf('://') === -1) {
+            proxySettings.http = rules.proxyForHttp.scheme + '://' + proxySettings.http;
+          }
         }
-        proxySettings.ssl = (rules.proxyForHttps.host + ':' + rules.proxyForHttps.port).trim();
-        if (proxySettings.ssl.startsWith('http') === false) {
-          proxySettings.ssl = rules.proxyForHttps.scheme + '://' + proxySettings.ssl;
+        if (rules.proxyForHttps.host && rules.proxyForHttps.port) {
+          proxySettings.ssl = (rules.proxyForHttps.host + ':' + rules.proxyForHttps.port).trim();
+          if (proxySettings.ssl.indexOf('://') === -1) {
+            proxySettings.ssl = rules.proxyForHttps.scheme + '://' + proxySettings.ssl;
+          }
         }
       }
       if (config.value.remoteDNS) {
@@ -75,7 +82,7 @@ if (/Firefox/.test(navigator.userAgent)) {
       proxySettings.proxyType = 'autoConfig';
       proxySettings.autoConfigUrl = config.value.pacScript.url;
     }
-
+    // console.log(proxySettings);
     browser.browserSettings.proxyConfig.set({value: proxySettings}, () => {
       const lastError = chrome.runtime.lastError;
       if (chrome.runtime.lastError) {

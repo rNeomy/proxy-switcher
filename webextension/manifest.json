@@ -22,7 +22,6 @@
   },
   "background": {
     "scripts": [
-      "proxy.js",
       "common.js"
     ]
   },
