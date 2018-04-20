@@ -27,7 +27,7 @@ if (/Firefox/.test(navigator.userAgent)) {
     addListener: c => chrome.proxy.callbacks.push(c)
   };
 
-  chrome.proxy.settings.set = (config, callback = function() {}) => {
+  chrome.proxy.settings.set = async(config, callback = function() {}) => {
     const proxySettings = {};
 
     if (config.value.mode === 'direct') {
@@ -83,6 +83,7 @@ if (/Firefox/.test(navigator.userAgent)) {
       proxySettings.autoConfigUrl = config.value.pacScript.url;
     }
     // console.log(proxySettings);
+    await browser.browserSettings.proxyConfig.clear({});
     browser.browserSettings.proxyConfig.set({value: proxySettings}, () => {
       const lastError = chrome.runtime.lastError;
       if (chrome.runtime.lastError) {
@@ -90,10 +91,11 @@ if (/Firefox/.test(navigator.userAgent)) {
       }
     });
 
-    chrome.storage.local.set({
+    await browser.storage.local.set({
       'ffcurent': {
         value: config.value
       }
-    }, callback);
+    });
+    callback();
   };
 }

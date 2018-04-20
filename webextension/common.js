@@ -63,7 +63,19 @@ function icon(config) {
 if (/Firefox/.test(navigator.userAgent)) {
   chrome.storage.onChanged.addListener(ps => {
     if (ps['ffcurent']) {
-      icon(ps['ffcurent'].newValue);
+      browser.browserSettings.proxyConfig.get({}).then(settings => {
+        const mode = {
+          'none': 'direct',
+          'autoDetect': 'auto_detect',
+          'system': 'system',
+          'manual': 'fixed_servers',
+          'autoConfig': 'pac_script'
+        }[settings.value.proxyType];
+        // overwrite the mode to make sure we are displaying the actual proxy mode;
+        ps['ffcurent'].newValue.value.mode = mode;
+
+        icon(ps['ffcurent'].newValue);
+      });
     }
   });
   chrome.storage.local.get({
