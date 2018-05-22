@@ -223,6 +223,7 @@ app.on('proxy-changed', mode => {
 });
 
 app.on('notify', msg => {
+  msg = msg.error || msg.message || msg;
   const div = document.createElement('div');
   div.textContent = (new Date()).toTimeString().split(' ')[0] + ': ' + msg;
   document.getElementById('notify').appendChild(div);

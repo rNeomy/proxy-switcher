@@ -60,10 +60,12 @@ function icon(config) {
   chrome.browserAction.setTitle({title});
 }
 
+chrome.proxy.settings.onChange.addListener(icon);
+
 if (/Firefox/.test(navigator.userAgent)) {
   chrome.storage.onChanged.addListener(ps => {
     if (ps['ffcurent']) {
-      browser.browserSettings.proxyConfig.get({}).then(settings => {
+      browser.proxy.settings.get({}).then(settings => {
         const mode = {
           'none': 'direct',
           'autoDetect': 'auto_detect',
@@ -78,17 +80,17 @@ if (/Firefox/.test(navigator.userAgent)) {
       });
     }
   });
+  chrome.proxy.settings.onChange.addListener(icon);
   chrome.storage.local.get({
     'ffcurent': {
       value: {
         mode: 'system'
       }
     }
-  }, prefs => icon(prefs['ffcurent']));
+  }, ({ffcurent}) => chrome.proxy.settings.set(ffcurent));
 }
 else {
   chrome.proxy.settings.get({}, icon);
-  chrome.proxy.settings.onChange.addListener(icon);
 }
 
 /* badge */

@@ -87,7 +87,6 @@ update((mode, config) => {
       ui.pac.input.dispatchEvent(new Event('keyup'));
     }
     else if (config.value.pacScript.data) {
-      console.log('FFFF');
       ui.pac.parent.querySelector('[name="pac"][value="data"]').checked = true;
       ui.pac.editor.value = config.value.pacScript.data;
     }

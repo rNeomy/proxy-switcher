@@ -51,21 +51,12 @@ if (/Firefox/.test(navigator.userAgent)) {
       else {
         if (rules.proxyForFtp.host && rules.proxyForFtp.port) {
           proxySettings.ftp = (rules.proxyForFtp.host + ':' + rules.proxyForFtp.port).trim();
-          if (proxySettings.ftp.indexOf('://') === -1) {
-            proxySettings.ftp = rules.proxyForFtp.scheme + '://' + proxySettings.ftp;
-          }
         }
         if (rules.proxyForHttp.host && rules.proxyForHttp.port) {
           proxySettings.http = (rules.proxyForHttp.host + ':' + rules.proxyForHttp.port).trim();
-          if (proxySettings.http.indexOf('://') === -1) {
-            proxySettings.http = rules.proxyForHttp.scheme + '://' + proxySettings.http;
-          }
         }
         if (rules.proxyForHttps.host && rules.proxyForHttps.port) {
           proxySettings.ssl = (rules.proxyForHttps.host + ':' + rules.proxyForHttps.port).trim();
-          if (proxySettings.ssl.indexOf('://') === -1) {
-            proxySettings.ssl = rules.proxyForHttps.scheme + '://' + proxySettings.ssl;
-          }
         }
       }
       if (config.value.remoteDNS) {
@@ -83,8 +74,8 @@ if (/Firefox/.test(navigator.userAgent)) {
       proxySettings.autoConfigUrl = config.value.pacScript.url;
     }
     // console.log(proxySettings);
-    await browser.browserSettings.proxyConfig.clear({});
-    browser.browserSettings.proxyConfig.set({value: proxySettings}, () => {
+    await browser.proxy.settings.clear({});
+    browser.proxy.settings.set({value: proxySettings}, () => {
       const lastError = chrome.runtime.lastError;
       if (chrome.runtime.lastError) {
         chrome.proxy.errors.forEach(c => c(lastError));

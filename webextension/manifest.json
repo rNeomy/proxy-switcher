@@ -3,7 +3,7 @@
   "short_name": "proxy-switcher",
   "description": "Manage and switch between multiple proxies quickly and easily through profiles",
   "author": "Richard Neomy",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "manifest_version": 2,
   "default_locale": "en",
   "permissions": [
@@ -11,7 +11,7 @@
     "notifications",
     "*://*/*",
     "webRequest",
-    "browserSettings"
+    "proxy"
   ],
   "browser_action": {
     "default_icon": {
@@ -22,6 +22,7 @@
   },
   "background": {
     "scripts": [
+      "data/panel/firefox-proxy.js",
       "common.js"
     ]
   },
