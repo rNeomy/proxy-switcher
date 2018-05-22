@@ -1,68 +1,103 @@
 'use strict';
 
 var _ = chrome.i18n.getMessage;
+var isFirefox = /Firefox/.test(navigator.userAgent);
 
 var prefs = {
-  color: '#666666',
-  counter: true
+  color: '#848384',
+  counter: true,
+  text: false, // icon text,
+  ffcurent: { // firefox default profile
+    value: {
+      mode: 'system'
+    }
+  },
+  version: null,
+  faqs: true,
+  'last-update': 0,
 };
-chrome.storage.local.get(prefs, ps => {
-  Object.assign(prefs, ps);
-  chrome.browserAction.setBadgeBackgroundColor({
-    color: prefs.color
-  });
-});
-chrome.storage.onChanged.addListener(ps => {
-  if (ps.counter) {
-    prefs.counter = ps.counter.newValue;
-  }
-  if (ps.color) {
-    chrome.browserAction.setBadgeBackgroundColor({
-      color: ps.color.newValue
-    });
-  }
-  if (ps.counter && ps.counter.newValue === false) {
-    chrome.tabs.query({}, tabs => tabs.forEach(tab => chrome.browserAction.setBadgeText({
-      tabId: tab.id,
-      text: ''
-    })));
-  }
-});
 
 /* icon color */
-function icon(config) {
-  let mode = config.value.mode;
+var icon = (() => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 48;
+  canvas.height = 48;
+  const ctx = canvas.getContext('2d');
 
-  if (mode === 'pac_script') {
-    mode = config.value.pacScript && config.value.pacScript.url ? 'pac_script_url' : 'pac_script_data';
-  }
+  ctx.fillStyle = '#626262';
 
-  chrome.browserAction.setIcon({
-    path: {
-      18: 'data/icons/toolbar/' + mode + '/18.png',
-      19: 'data/icons/toolbar/' + mode + '/19.png',
-      36: 'data/icons/toolbar/' + mode + '/36.png',
-      38: 'data/icons/toolbar/' + mode + '/38.png'
+  ctx.fill(
+    new Path2D('M28.256,39.289v-1.26h-8.512v1.26c0,1.393-1.129,2.521-2.522,2.521h-2.079v2.523h17.713v-2.523h-2.078    C29.385,41.811,28.256,40.682,28.256,39.289z')
+  );
+  ctx.fill(
+    new Path2D('M45.396,3.667h-0.273H2.859H2.605H0.021V6.25v0.648v26.895v0.391v2.584h2.583h0.589h40.982h1.22h2.583    v-2.584v-0.883V6.846V6.25V3.667H45.396z M24,35.23c-0.696,0-1.261-0.564-1.261-1.262c0-0.695,0.565-1.26,1.261-1.26    c0.697,0,1.261,0.564,1.261,1.26C25.261,34.666,24.697,35.23,24,35.23z M45.435,6.846v0.919v23.644H2.565V7.765V6.898V6.009h0.293    h1.359h39.485h1.419h0.312V6.846z')
+  );
+  const compare = (a, b) => {
+    const aValue = a.value;
+    const bValue = b.value;
+    return aValue.mode === bValue.mode &&
+      JSON.stringify(aValue.rules) === JSON.stringify(bValue.rules);
+  };
+
+  return config => {
+    let mode = config.value.mode;
+    if (mode === 'pac_script') {
+      mode = config.value.pacScript && config.value.pacScript.url ? 'pac_script_url' : 'pac_script_data';
     }
-  });
-  let title = 'Proxy Switcher\n\n';
-  title += ({
-    'direct': _('modeDirect'),
-    'auto_detect': _('modeAuto'),
-    get 'pac_script_url'() {
-      return _('modePACU') + config.value.pacScript.url;
-    },
-    'pac_script_data': _('modePACD'),
-    'fixed_servers': _('modeFixed'),
-    'system': _('modeSystem')
-  })[mode];
 
-  chrome.browserAction.setTitle({title});
-}
+    ctx.fillStyle = {
+      'auto_detect': '#2124fc',
+      'direct': '#000',
+      'fixed_servers': '#fd0e1c',
+      'pac_script_url': '#fb9426',
+      'pac_script_data': '#fb9426',
+      'system': '#31736b'
+    }[mode];
+    ctx.fillRect(5.04, 8.652, 37.83, 20.176);
 
-chrome.proxy.settings.onChange.addListener(icon);
+    ctx.fillStyle = mode === 'pac_script_url' ? '#fd0e1c' : '#31736b';
+    if (mode === 'pac_script') {
+      ctx.fillRect(5.04, 8.652, 37.83 / 2, 20.176);
+    }
+    if (mode === 'fixed_servers' && prefs.text) {
+      const profile = (prefs.profiles || []).filter(p => {
+        const profile = prefs['profile.' + p];
 
-if (/Firefox/.test(navigator.userAgent)) {
+        return compare(profile, config);
+      }).shift();
+
+      if (profile) {
+        ctx.fillStyle = '#fff';
+        ctx.font = '400 20px/24px Roboto,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(profile[0], 24, 19);
+      }
+    }
+
+    chrome.browserAction.setIcon({
+      imageData: ctx.getImageData(0, 0, 48, 48)
+    });
+
+    let title = 'Proxy Switcher\n\n';
+    title += ({
+      'direct': _('modeDirect'),
+      'auto_detect': _('modeAuto'),
+      get 'pac_script_url'() {
+        return _('modePACU') + config.value.pacScript.url;
+      },
+      'pac_script_data': _('modePACD'),
+      'fixed_servers': _('modeFixed'),
+      'system': _('modeSystem')
+    })[mode];
+
+    chrome.browserAction.setTitle({title});
+  };
+})();
+
+chrome.proxy.settings.onChange.addListener(config => window.setTimeout(icon, 500, config));
+
+if (isFirefox) {
   chrome.storage.onChanged.addListener(ps => {
     if (ps['ffcurent']) {
       browser.proxy.settings.get({}).then(settings => {
@@ -75,22 +110,9 @@ if (/Firefox/.test(navigator.userAgent)) {
         }[settings.value.proxyType];
         // overwrite the mode to make sure we are displaying the actual proxy mode;
         ps['ffcurent'].newValue.value.mode = mode;
-
-        icon(ps['ffcurent'].newValue);
       });
     }
   });
-  chrome.proxy.settings.onChange.addListener(icon);
-  chrome.storage.local.get({
-    'ffcurent': {
-      value: {
-        mode: 'system'
-      }
-    }
-  }, ({ffcurent}) => chrome.proxy.settings.set(ffcurent));
-}
-else {
-  chrome.proxy.settings.get({}, icon);
 }
 
 /* badge */
@@ -146,12 +168,19 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
   }
 });
 
-// FAQs & Feedback
-chrome.storage.local.get({
-  'version': null,
-  'faqs': true,
-  'last-update': 0,
-}, prefs => {
+// init
+chrome.storage.local.get(null, ps => {
+  Object.assign(prefs, ps);
+  chrome.browserAction.setBadgeBackgroundColor({
+    color: prefs.color
+  });
+  if (isFirefox) {
+    chrome.proxy.settings.set(prefs.ffcurent);
+  }
+  else {
+    chrome.proxy.settings.get({}, icon);
+  }
+  // FAQs
   const version = chrome.runtime.getManifest().version;
 
   if (prefs.version ? (prefs.faqs && prefs.version !== version) : true) {
@@ -173,7 +202,27 @@ chrome.storage.local.get({
     });
   }
 });
+// pref changes
+chrome.storage.onChanged.addListener(ps => {
+  Object.keys(ps).forEach(k => prefs[k] = ps[k].newValue);
 
+  if (ps.color) {
+    chrome.browserAction.setBadgeBackgroundColor({
+      color: prefs.color
+    });
+  }
+  if (ps.counter && ps.counter.newValue === false) {
+    chrome.tabs.query({}, tabs => tabs.forEach(tab => chrome.browserAction.setBadgeText({
+      tabId: tab.id,
+      text: ''
+    })));
+  }
+  if (ps.profiles || ps.text) {
+    chrome.proxy.settings.get({}, icon);
+  }
+});
+
+// Feedback
 {
   const {name, version} = chrome.runtime.getManifest();
   chrome.runtime.setUninstallURL(

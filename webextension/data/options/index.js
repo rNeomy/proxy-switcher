@@ -1,9 +1,13 @@
 'use strict';
 
 function save() {
+  const faqs = document.getElementById('faqs').checked;
+  const text = document.getElementById('text').checked;
   const counter = document.getElementById('counter').checked;
   const color = document.getElementById('color').value;
   chrome.storage.local.set({
+    faqs,
+    text,
     counter,
     color
   }, () => {
@@ -15,9 +19,13 @@ function save() {
 
 function restore() {
   chrome.storage.local.get({
+    faqs: true,
+    text: false,
     counter: true,
     color: '#666666'
   }, prefs => {
+    document.getElementById('faqs').checked = prefs.faqs;
+    document.getElementById('text').checked = prefs.text;
     document.getElementById('counter').checked = prefs.counter;
     document.getElementById('color').value = prefs.color;
   });
