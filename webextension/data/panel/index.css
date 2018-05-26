@@ -59,7 +59,7 @@ select {
   background-size: 10px;
   color: transparent;
   border-radius: 0;
-  border: none;
+  border: solid 1px transparent;
   color: #000;
   text-indent: 100px;
 }
@@ -196,6 +196,9 @@ option {
   top: 10px;
   right: 10px;
   z-index: 3;
+  max-width: 50vw;
+  max-height: 50vh;
+  overflow: hidden;
 }
 #notify>div {
   background-color: #fcf7df;
@@ -203,6 +206,9 @@ option {
   color: #7f6256;
   padding: 10px;
   margin: 2px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .body {
   background-color: #fff;

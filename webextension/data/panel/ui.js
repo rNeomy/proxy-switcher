@@ -39,6 +39,17 @@ var ui = {
     editor: document.querySelector('textarea')
   }
 };
+// colors
+document.querySelector('#tabs li.no-proxy').style['border-top-color'] =
+  localStorage.getItem('no-proxy') || '#000';
+document.querySelector('#tabs li.auto-proxy').style['border-top-color'] =
+  localStorage.getItem('auto-proxy') || '#2124fc';
+document.querySelector('#tabs li.system-proxy').style['border-top-color'] =
+  localStorage.getItem('system-proxy') || '#31736b';
+document.querySelector('#tabs li.manual-proxy').style['border-top-color'] =
+  localStorage.getItem('manual-proxy') || '#fd0e1c';
+document.querySelector('#tabs li.pac-proxy').style['border-top-color'] =
+  localStorage.getItem('pac-proxy') || '#fb9426';
 
 document.addEventListener('click', ({target, isTrusted}) => {
   // select radio buttons on focus
@@ -87,14 +98,14 @@ ui.manual.http.port.addEventListener('input', ({target}) => {
   // profile name is mandatory
   changed = changed && ui.manual.profile.value;
   ui.manual.apply.disabled = !changed;
+  //
+  ui.manual.selector.value = changed ? '' : ui.manual.profile.value;
   // remote DNS
   const scheme = ui.manual.type.querySelector(':checked').value;
   ui.manual.remoteDNS.parentNode.dataset.available = scheme === 'socks5';
   if (!scheme.startsWith('socks')) {
     ui.manual.remoteDNS.checked = false;
   }
-
-  ui.manual.selector.value = changed ? '' : ui.manual.profile.value;
 });
 // updating from object
 app.on('update-manual-tab', ({value}) => {
@@ -227,5 +238,6 @@ app.on('notify', msg => {
   const div = document.createElement('div');
   div.textContent = (new Date()).toTimeString().split(' ')[0] + ': ' + msg;
   document.getElementById('notify').appendChild(div);
+  div.scrollIntoView();
   window.setTimeout(() => document.getElementById('notify').removeChild(div), 5000);
 });

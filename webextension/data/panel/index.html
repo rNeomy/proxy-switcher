@@ -11,7 +11,7 @@
     </div>
     <ul id="tabs">
       <label><input type="radio" name="tabs"><li data-mode="direct" class="no-proxy" data-open="others">Direct</li></label>
-      <label><input type="radio" name="tabs"><li data-mode="auto_detect" class="auto-proxy" data-open="others">Auto-detect</li></label>
+      <label><input type="radio" name="tabs"><li data-mode="auto_detect" class="auto-proxy" data-open="others">Auto Detect</li></label>
       <label><input type="radio" name="tabs"><li data-mode="system" class="system-proxy" data-open="others">System Proxy</li></label>
       <label><input type="radio" name="tabs"><li data-mode="fixed_servers" class="manual-proxy" data-open="manual">Manual Proxy</li></label>
       <label><input type="radio" name="tabs"><li data-mode="pac_script" class="pac-proxy" data-open="pac">PAC Script</li></label>
@@ -69,7 +69,7 @@
           <td>Server Type:</td>
           <td>
             <label><input type="radio" name="socks" value="http" data-value="false">HTTP</label>
-            <label><input type="radio" name="socks" value="https" data-value="false">HTTPS</label>
+            <label no-firefox><input type="radio" name="socks" value="https" data-value="false">HTTPS</label>
             <label><input type="radio" name="socks" value="socks4" data-value="false">SOCKS v4</label>
             <label><input type="radio" name="socks" value="socks5" checked data-value="true">SOCKS v5</label>
           </td>

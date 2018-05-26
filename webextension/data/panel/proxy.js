@@ -10,12 +10,6 @@ if (isFirefox === false) {
     proxy.apply(chrome.proxy.settings, arguments);
   };
 }
-chrome.proxy.compare = (a, b) => {
-  const aValue = a.value;
-  const bValue = b.value;
-  return aValue.mode === bValue.mode &&
-    JSON.stringify(aValue.rules) === JSON.stringify(bValue.rules);
-};
 
 function update(callback = function() {}) {
   chrome.proxy.settings.get({}, ({value}) => {

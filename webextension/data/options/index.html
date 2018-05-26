@@ -17,8 +17,12 @@
         padding: 0;
         margin: 0;
       }
+      td:first-child {
+        text-align: left;
+      }
       td:last-child {
         text-align: right;
+        white-space: nowrap;
       }
       button:not(:first-child) {
         margin-left: 6px;
@@ -36,6 +40,33 @@
       <tr>
         <td>Display first profile letter on the "Manual Proxy" mode</td>
         <td><input type="checkbox" id="text"></td>
+      </tr>
+      <tr>
+        <td>Color codes:</td>
+        <td>
+          <table>
+            <tr>
+              <td>Direct</td>
+              <td><input type="color" id="no-proxy"></td>
+            </tr>
+            <tr>
+              <td>Auto Detect</td>
+              <td><input type="color" id="auto-proxy"></td>
+            </tr>
+            <tr>
+              <td>System Proxy</td>
+              <td><input type="color" id="system-proxy"></td>
+            </tr>
+            <tr>
+              <td>Manual Proxy</td>
+              <td><input type="color" id="manual-proxy"></td>
+            </tr>
+            <tr>
+              <td>PAC Script</td>
+              <td><input type="color" id="pac-proxy"></td>
+            </tr>
+          </table>
+        </td>
       </tr>
       <tr>
         <td>Open FAQs page on updates</td>

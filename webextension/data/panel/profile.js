@@ -47,8 +47,7 @@ profile.search = (config, callback) => {
   chrome.storage.local.get(null, prefs => {
     const name = (prefs.profiles || []).filter(p => {
       const profile = prefs['profile.' + p];
-
-      return chrome.proxy.compare(profile, config);
+      return app.compare(profile, config);
     }).shift();
     callback(name);
   });
@@ -71,5 +70,6 @@ app.on('profiles-updated', () => chrome.storage.local.get({
     ui.manual.selector.appendChild(option);
     ui.manual.profiles.appendChild(option.cloneNode(false));
   });
+  ui.manual.selector.value = ui.manual.profile.value;
 }));
 app.emit('profiles-updated');

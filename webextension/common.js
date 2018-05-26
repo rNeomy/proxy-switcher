@@ -1,3 +1,4 @@
+/* globals app */
 'use strict';
 
 var _ = chrome.i18n.getMessage;
@@ -7,14 +8,10 @@ var prefs = {
   color: '#848384',
   counter: true,
   text: false, // icon text,
-  ffcurent: { // firefox default profile
-    value: {
-      mode: 'system'
-    }
-  },
   version: null,
   faqs: true,
   'last-update': 0,
+  ffcurent: null
 };
 
 /* icon color */
@@ -32,12 +29,6 @@ var icon = (() => {
   ctx.fill(
     new Path2D('M45.396,3.667h-0.273H2.859H2.605H0.021V6.25v0.648v26.895v0.391v2.584h2.583h0.589h40.982h1.22h2.583    v-2.584v-0.883V6.846V6.25V3.667H45.396z M24,35.23c-0.696,0-1.261-0.564-1.261-1.262c0-0.695,0.565-1.26,1.261-1.26    c0.697,0,1.261,0.564,1.261,1.26C25.261,34.666,24.697,35.23,24,35.23z M45.435,6.846v0.919v23.644H2.565V7.765V6.898V6.009h0.293    h1.359h39.485h1.419h0.312V6.846z')
   );
-  const compare = (a, b) => {
-    const aValue = a.value;
-    const bValue = b.value;
-    return aValue.mode === bValue.mode &&
-      JSON.stringify(aValue.rules) === JSON.stringify(bValue.rules);
-  };
 
   return config => {
     let mode = config.value.mode;
@@ -45,27 +36,27 @@ var icon = (() => {
       mode = config.value.pacScript && config.value.pacScript.url ? 'pac_script_url' : 'pac_script_data';
     }
 
-    ctx.fillStyle = {
-      'auto_detect': '#2124fc',
-      'direct': '#000',
-      'fixed_servers': '#fd0e1c',
-      'pac_script_url': '#fb9426',
-      'pac_script_data': '#fb9426',
-      'system': '#31736b'
-    }[mode];
+    const map = {
+      'auto_detect': localStorage.getItem('auto-proxy') || '#2124fc',
+      'direct': localStorage.getItem('no-proxy') || '#000',
+      'fixed_servers': localStorage.getItem('manual-proxy') || '#fd0e1c',
+      'pac_script_url': localStorage.getItem('pac-proxy') || '#fb9426',
+      'pac_script_data': localStorage.getItem('pac-proxy') || '#fb9426',
+      'system': localStorage.getItem('system-proxy') || '#31736b'
+    };
+
+    ctx.fillStyle = map[mode];
     ctx.fillRect(5.04, 8.652, 37.83, 20.176);
 
-    ctx.fillStyle = mode === 'pac_script_url' ? '#fd0e1c' : '#31736b';
-    if (mode === 'pac_script') {
+    if (mode.startsWith('pac_script')) {
+      ctx.fillStyle = mode === 'pac_script_url' ? map['system'] : map['fixed_servers'];
       ctx.fillRect(5.04, 8.652, 37.83 / 2, 20.176);
     }
     if (mode === 'fixed_servers' && prefs.text) {
       const profile = (prefs.profiles || []).filter(p => {
         const profile = prefs['profile.' + p];
-
-        return compare(profile, config);
+        return app.compare(profile, config);
       }).shift();
-
       if (profile) {
         ctx.fillStyle = '#fff';
         ctx.font = '400 20px/24px Roboto,sans-serif';
@@ -95,25 +86,7 @@ var icon = (() => {
   };
 })();
 
-chrome.proxy.settings.onChange.addListener(config => window.setTimeout(icon, 500, config));
-
-if (isFirefox) {
-  chrome.storage.onChanged.addListener(ps => {
-    if (ps['ffcurent']) {
-      browser.proxy.settings.get({}).then(settings => {
-        const mode = {
-          'none': 'direct',
-          'autoDetect': 'auto_detect',
-          'system': 'system',
-          'manual': 'fixed_servers',
-          'autoConfig': 'pac_script'
-        }[settings.value.proxyType];
-        // overwrite the mode to make sure we are displaying the actual proxy mode;
-        ps['ffcurent'].newValue.value.mode = mode;
-      });
-    }
-  });
-}
+chrome.proxy.settings.onChange.addListener(icon);
 
 /* badge */
 var tabs = {};
@@ -171,11 +144,15 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
 // init
 chrome.storage.local.get(null, ps => {
   Object.assign(prefs, ps);
+  // badge color
   chrome.browserAction.setBadgeBackgroundColor({
     color: prefs.color
   });
-  if (isFirefox) {
-    chrome.proxy.settings.set(prefs.ffcurent);
+  // initial proxy
+  if (isFirefox && prefs.ffcurent) {
+    chrome.proxy.settings.set(prefs.ffcurent, () => {
+      chrome.proxy.settings.get({}, icon);
+    });
   }
   else {
     chrome.proxy.settings.get({}, icon);
