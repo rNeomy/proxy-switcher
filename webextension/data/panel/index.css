@@ -182,6 +182,12 @@ option {
 #manual td:nth-child(3) {
   text-align: center;
 }
+#manual .search {
+  vertical-align: bottom;
+}
+#manual .search td {
+  height: 42px;
+}
 [data-available=false] {
   opacity: 0.5;
   pointer-events: none;

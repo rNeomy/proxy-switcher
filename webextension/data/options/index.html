@@ -7,10 +7,14 @@
   <body>
     <style>
       body {
-        min-width: 400px;
+        min-width: 500px;
         padding: 10px;
       }
       table {width: 100%;}
+      th {
+        background-color: rgba(0, 0, 0, 0.05);
+        height: 24px;
+      }
       hr {
         border: none;
         border-top: dashed 1px #ccc;
@@ -29,49 +33,134 @@
       }
     </style>
     <table>
-      <tr>
-        <td>Display badge counter for errors<sup>1</sup></td>
-        <td><input type="checkbox" id="counter"></td>
-      </tr>
-      <tr>
-        <td>Badge color for the counter</td>
-        <td><input type="color" id="color"></td>
-      </tr>
-      <tr>
-        <td>Display first profile letter on the "Manual Proxy" mode</td>
-        <td><input type="checkbox" id="text"></td>
-      </tr>
-      <tr>
-        <td>Color codes:</td>
-        <td>
-          <table>
-            <tr>
-              <td>Direct</td>
-              <td><input type="color" id="no-proxy"></td>
-            </tr>
-            <tr>
-              <td>Auto Detect</td>
-              <td><input type="color" id="auto-proxy"></td>
-            </tr>
-            <tr>
-              <td>System Proxy</td>
-              <td><input type="color" id="system-proxy"></td>
-            </tr>
-            <tr>
-              <td>Manual Proxy</td>
-              <td><input type="color" id="manual-proxy"></td>
-            </tr>
-            <tr>
-              <td>PAC Script</td>
-              <td><input type="color" id="pac-proxy"></td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-      <tr>
-        <td>Open FAQs page on updates</td>
-        <td><input type="checkbox" id="faqs"></td>
-      </tr>
+      <thead>
+        <tr>
+          <th colspan="2">Badge</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Display badge counter for errors<sup>1</sup></td>
+          <td><input type="checkbox" id="counter"></td>
+        </tr>
+        <tr>
+          <td>Badge color for the counter</td>
+          <td><input type="color" id="color"></td>
+        </tr>
+        <tr>
+          <td>Display first profile letter on the "Manual Proxy" mode</td>
+          <td><input type="checkbox" id="text"></td>
+        </tr>
+      </tbody>
+      <thead>
+        <tr>
+          <th colspan="2">Color Codes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Direct</td>
+          <td><input type="color" id="no-proxy"></td>
+        </tr>
+        <tr>
+          <td>Auto Detect</td>
+          <td><input type="color" id="auto-proxy"></td>
+        </tr>
+        <tr>
+          <td>System Proxy</td>
+          <td><input type="color" id="system-proxy"></td>
+        </tr>
+        <tr>
+          <td>Manual Proxy</td>
+          <td><input type="color" id="manual-proxy"></td>
+        </tr>
+        <tr>
+          <td>PAC Script</td>
+          <td><input type="color" id="pac-proxy"></td>
+        </tr>
+      </tbody>
+      <thead>
+        <tr>
+          <th colspan="2">Find a Proxy Server</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Server</td>
+          <td><select id="server">
+            <option value="https://gimmeproxy.com/api/getProxy">gimmeproxy.com</option>
+            <option value="https://api.getproxylist.com/proxy">getproxylist.com</option>
+          </select></td>
+        </tr>
+        <tr>
+          <td>Anonymity</td>
+          <td><select id="anonymity">
+            <option value="">Any</option>
+            <option value="transparent">Transparent</option>
+            <option value="anonymous">Anonymous</option>
+            <option value="high anonymity">High Anonymity</option>
+          </select></td>
+        </tr>
+        <tr>
+          <td>Allows Referrer Header</td>
+          <td><select id="allowsRefererHeader">
+            <option value="">Any</option>
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select></td>
+        </tr>
+        <tr>
+          <td>Allows User-agent Header</td>
+          <td><select id="allowsUserAgentHeader">
+            <option value="">Any</option>
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select></td>
+        </tr>
+        <tr>
+          <td>Allows Custom Headers</td>
+          <td><select id="allowsCustomHeaders">
+            <option value="">Any</option>
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select></td>
+        </tr>
+        <tr>
+          <td>Allows Cookies</td>
+          <td><select id="allowsCookies">
+            <option value="">Any</option>
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select></td>
+        </tr>
+        <tr>
+          <td>Country</td>
+          <td><select id="country">
+            <option value="">Any</option>
+            <option value="US">US</option>
+            <option value="BR">BR</option>
+            <option value="ID">ID</option>
+            <option value="CN">CN</option>
+            <option value="RU">RU</option>
+            <option value="BD">BD</option>
+            <option value="IN">IN</option>
+            <option value="UA">UA</option>
+            <option value="IT">IT</option>
+          </select></td>
+        </tr>
+
+      </tbody>
+      <thead>
+        <tr>
+          <th colspan="2">Misc</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Open FAQs page on updates</td>
+          <td><input type="checkbox" id="faqs"></td>
+        </tr>
+      </tbody>
     </table>
 
     <p style="display: flex; align-items: flex-end;">

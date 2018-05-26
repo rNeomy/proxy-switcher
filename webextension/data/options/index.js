@@ -1,5 +1,19 @@
 'use strict';
 
+var config = {
+  faqs: true,
+  text: false,
+  counter: true,
+  color: '#666666',
+  server: 'https://gimmeproxy.com/api/getProxy',
+  anonymity: '',
+  allowsRefererHeader: '',
+  allowsUserAgentHeader: '',
+  allowsCustomHeaders: '',
+  allowsCookies: '',
+  country: ''
+};
+
 function save() {
   localStorage.setItem('no-proxy', document.getElementById('no-proxy').value);
   localStorage.setItem('auto-proxy', document.getElementById('auto-proxy').value);
@@ -7,15 +21,18 @@ function save() {
   localStorage.setItem('manual-proxy', document.getElementById('manual-proxy').value);
   localStorage.setItem('pac-proxy', document.getElementById('pac-proxy').value);
 
-  const faqs = document.getElementById('faqs').checked;
-  const text = document.getElementById('text').checked;
-  const counter = document.getElementById('counter').checked;
-  const color = document.getElementById('color').value;
   chrome.storage.local.set({
-    faqs,
-    text,
-    counter,
-    color
+    faqs: document.getElementById('faqs').checked,
+    text: document.getElementById('text').checked,
+    counter: document.getElementById('counter').checked,
+    color: document.getElementById('color').value,
+    server: document.getElementById('server').value,
+    anonymity: document.getElementById('anonymity').value,
+    allowsRefererHeader: document.getElementById('allowsRefererHeader').value,
+    allowsUserAgentHeader: document.getElementById('allowsUserAgentHeader').value,
+    allowsCustomHeaders: document.getElementById('allowsCustomHeaders').value,
+    allowsCookies: document.getElementById('allowsCookies').value,
+    country: document.getElementById('country').value
   }, () => {
     const status = document.getElementById('status');
     status.textContent = 'Options saved.';
@@ -37,31 +54,19 @@ function restore() {
     localStorage.getItem('manual-proxy') || '#fd0e1c';
   document.getElementById('pac-proxy').value =
     localStorage.getItem('pac-proxy') || '#fb9426';
-  chrome.storage.local.get({
-    faqs: true,
-    text: false,
-    counter: true,
-    color: '#666666'
-  }, prefs => {
-    document.getElementById('faqs').checked = prefs.faqs;
-    document.getElementById('text').checked = prefs.text;
-    document.getElementById('counter').checked = prefs.counter;
-    document.getElementById('color').value = prefs.color;
+  chrome.storage.local.get(config, prefs => {
+    Object.entries(prefs).forEach(([key, value]) => {
+      document.getElementById(key)[typeof value === 'boolean' ? 'checked' : 'value'] = value;
+    });
   });
 }
 
 document.addEventListener('DOMContentLoaded', restore);
 document.getElementById('save').addEventListener('click', save);
 document.getElementById('reset').addEventListener('click', () => {
-  document.getElementById('counter').checked = true;
-  document.getElementById('faqs').checked = true;
-  document.getElementById('text').checked = false;
-  document.getElementById('color').value = '#666666';
-  document.getElementById('no-proxy').value = '#000';
-  document.getElementById('auto-proxy').value = '#2124fc';
-  document.getElementById('system-proxy').value = '#31736b';
-  document.getElementById('manual-proxy').value = '#fd0e1c';
-  document.getElementById('pac-proxy').value = '#fb9426';
+  Object.entries(config).forEach(([key, value]) => {
+    document.getElementById(key)[typeof value === 'boolean' ? 'checked' : 'value'] = value;
+  });
 });
 document.getElementById('export').addEventListener('click', () => {
   chrome.storage.local.get(null, prefs => {
