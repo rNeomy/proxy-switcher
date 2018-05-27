@@ -1,21 +1,19 @@
 /* globals ui, app */
 'use strict';
 
-var search = {
-  get base() {
-    return localStorage.getItem('search.base') || 'https://gimmeproxy.com/api/getProxy';
-  }
-};
+var search = {};
 
-search.fetch = (args = {}) => {
+search.fetch = (base, args = {}) => {
   Object.assign(args, {
     allowsPost: true, // Supports POST requests
     allowsHttps: true // Supports HTTPS requests
   });
-  return fetch(search.base + '?' + Object.entries(args)
+  return fetch(base + '?' + Object.entries(args)
     .map(([k, v]) => `${k}=${v}`)
     .join('&'))
-    .then(r => (r.ok ? r.json() : Promise.reject(r.status === 403 ? 'Max limit reached' : 'Cannot connect to the server')))
+    .then(r => (
+      r.ok ? r.json() : Promise.reject(r.status === 403 ? 'Max limit reached' : 'Cannot connect to the server')
+    ))
     .then(j => (j.error ? Promise.reject(j.error) : j));
 };
 
@@ -52,7 +50,7 @@ search.verify = proxy => new Promise((resolve, reject) => chrome.proxy.settings.
     search.ping('google.com').then(resolve, () => false),
     search.ping('bing.com').then(resolve, () => false),
     search.ping('yahoo.com').then(resolve, () => false)
-  ]).then(() => reject('ping failed'));
+  ]).then(() => reject('Ping failed'));
 }));
 
 {
@@ -94,7 +92,7 @@ search.verify = proxy => new Promise((resolve, reject) => chrome.proxy.settings.
           const {proxy, info} = search.convert(json);
           log(`Validating ${info.ip}:${info.port}`);
           await search.verify(proxy);
-          log('Looks good! Press the save button to create a new profile');
+          log('Looks good!');
           app.emit('update-manual-tab', proxy);
           ui.manual.profile.value = 'new proxy from ' + info.country;
           ui.manual.profile.dispatchEvent(new Event('input', {bubbles: true}));
