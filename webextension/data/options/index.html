@@ -93,6 +93,15 @@
           </select></td>
         </tr>
         <tr>
+          <td>While Validating Switch to:</td>
+          <td><select id="validate-mode">
+            <option value="direct">Direct</option>
+            <option value="auto_detect">Auto Detect</option>
+            <option value="system">System Proxy</option>
+            <option value="fixed_servers">Manual Proxy</option>
+          </select></td>
+        </tr>
+        <tr>
           <td>Anonymity</td>
           <td><select id="anonymity">
             <option value="">Any</option>
@@ -157,6 +166,15 @@
       </thead>
       <tbody>
         <tr>
+          <td>Startup Proxy:</td>
+          <td><select id="startup-proxy">
+            <option value="no">Do not alter</option>
+            <option value="direct">Direct</option>
+            <option value="auto_detect">Auto Detect</option>
+            <option value="system">System Proxy</option>
+          </select></td>
+        </tr>
+        <tr>
           <td>Open FAQs page on updates</td>
           <td><input type="checkbox" id="faqs"></td>
         </tr>
@@ -166,7 +184,7 @@
     <p style="display: flex; align-items: flex-end;">
 
     </p>
-    <p style="display: flex;">
+    <p style="display: flex; align-items: center;">
       <button id="import">Import<sup>2</sup></button>
       <button id="export">Export</button>
       <span style="flex: 1;"></span>

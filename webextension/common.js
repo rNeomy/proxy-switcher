@@ -11,7 +11,8 @@ var prefs = {
   version: null,
   faqs: true,
   'last-update': 0,
-  ffcurent: null
+  ffcurent: null,
+  'startup-proxy': 'no'
 };
 
 /* icon color */
@@ -149,13 +150,22 @@ chrome.storage.local.get(null, ps => {
     color: prefs.color
   });
   // initial proxy
-  if (isFirefox && prefs.ffcurent) {
-    chrome.proxy.settings.set(prefs.ffcurent, () => {
+  if (prefs['startup-proxy'] === 'no') {
+    if (isFirefox && prefs.ffcurent) {
+      chrome.proxy.settings.set(prefs.ffcurent, () => {
+        chrome.proxy.settings.get({}, icon);
+      });
+    }
+    else {
       chrome.proxy.settings.get({}, icon);
-    });
+    }
   }
   else {
-    chrome.proxy.settings.get({}, icon);
+    chrome.proxy.settings.set({
+      value: {
+        mode: prefs['startup-proxy']
+      }
+    }, icon);
   }
   // FAQs
   const version = chrome.runtime.getManifest().version;

@@ -63,43 +63,47 @@ search.verify = proxy => new Promise((resolve, reject) => chrome.proxy.settings.
   button.addEventListener('click', () => {
     button.disabled = true;
     // store proxy setting
+    const set = mode => {
+      if (mode === 'fixed_servers') {
+        return Promise.resolve();
+      }
+      return new Promise(resolve => chrome.proxy.settings.set({ //clear proxy
+        value: {mode}
+      }, resolve));
+    };
     chrome.proxy.settings.get({}, ({value}) => {
-      chrome.proxy.settings.set({ //clear proxy
-        value: {
-          mode: 'direct'
-        }
-      }, () => {
-        chrome.storage.local.get({
-          server: 'https://gimmeproxy.com/api/getProxy',
-          anonymity: '',
-          allowsRefererHeader: '',
-          allowsUserAgentHeader: '',
-          allowsCustomHeaders: '',
-          allowsCookies: '',
-          country: ''
-        }, async(prefs) => {
-          Object.entries(prefs).forEach(([key, value]) => {
-            if (!value) {
-              delete prefs[key];
-            }
-          });
-          try {
-            log('Searching for a server ...');
-            const json = await search.fetch(prefs.server, prefs);
-            const {proxy, info} = search.convert(json);
-            log(`Validating ${info.ip}:${info.port}`);
-            await search.verify(proxy);
-            log('Proxy works!');
-            app.emit('update-manual-tab', proxy);
-            ui.manual.profile.value = 'new proxy from ' + info.country;
-            ui.manual.profile.dispatchEvent(new Event('input', {bubbles: true}));
+      chrome.storage.local.get({
+        server: 'https://gimmeproxy.com/api/getProxy',
+        'validate-mode': 'direct',
+        anonymity: '',
+        allowsRefererHeader: '',
+        allowsUserAgentHeader: '',
+        allowsCustomHeaders: '',
+        allowsCookies: '',
+        country: ''
+      }, async(prefs) => {
+        await set(prefs['validate-mode']);
+        Object.entries(prefs).forEach(([key, value]) => {
+          if (!value) {
+            delete prefs[key];
           }
-          catch (e) {
-            log(e.message || e || 'Error!');
-            chrome.proxy.settings.set({value});
-          }
-          button.disabled = false;
         });
+        try {
+          log('Searching for a server ...');
+          const json = await search.fetch(prefs.server, prefs);
+          const {proxy, info} = search.convert(json);
+          log(`Validating ${info.ip}:${info.port}`);
+          await search.verify(proxy);
+          log('Looks good! Press the save button to create a new profile');
+          app.emit('update-manual-tab', proxy);
+          ui.manual.profile.value = 'new proxy from ' + info.country;
+          ui.manual.profile.dispatchEvent(new Event('input', {bubbles: true}));
+        }
+        catch (e) {
+          log(e.message || e || 'Error!');
+          chrome.proxy.settings.set({value});
+        }
+        button.disabled = false;
       });
     });
   });

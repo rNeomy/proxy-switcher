@@ -1,17 +1,19 @@
 'use strict';
 
 var config = {
-  faqs: true,
   text: false,
   counter: true,
   color: '#666666',
   server: 'https://gimmeproxy.com/api/getProxy',
+  'validate-mode': 'direct',
   anonymity: '',
   allowsRefererHeader: '',
   allowsUserAgentHeader: '',
   allowsCustomHeaders: '',
   allowsCookies: '',
-  country: ''
+  country: '',
+  faqs: true,
+  'startup-proxy': 'no'
 };
 
 function save() {
@@ -22,17 +24,19 @@ function save() {
   localStorage.setItem('pac-proxy', document.getElementById('pac-proxy').value);
 
   chrome.storage.local.set({
-    faqs: document.getElementById('faqs').checked,
     text: document.getElementById('text').checked,
     counter: document.getElementById('counter').checked,
     color: document.getElementById('color').value,
     server: document.getElementById('server').value,
+    'validate-mode': document.getElementById('validate-mode').value,
     anonymity: document.getElementById('anonymity').value,
     allowsRefererHeader: document.getElementById('allowsRefererHeader').value,
     allowsUserAgentHeader: document.getElementById('allowsUserAgentHeader').value,
     allowsCustomHeaders: document.getElementById('allowsCustomHeaders').value,
     allowsCookies: document.getElementById('allowsCookies').value,
-    country: document.getElementById('country').value
+    country: document.getElementById('country').value,
+    faqs: document.getElementById('faqs').checked,
+    'startup-proxy': document.getElementById('startup-proxy').value,
   }, () => {
     const status = document.getElementById('status');
     status.textContent = 'Options saved.';
