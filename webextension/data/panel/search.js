@@ -32,7 +32,7 @@ search.convert = json => {
         rules: {
           proxyForFtp: proxy,
           proxyForHttp: proxy,
-          proxyForHttps: proxy,
+          proxyForHttps: proxy
         }
       }
     }

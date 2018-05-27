@@ -32,8 +32,11 @@ app.notify = (e, callback) => chrome.notifications.create({
 }, callback);
 
 app.compare = (a, b) => {
-  const ka = Object.keys(a).filter(s => s !== 'remoteDNS' && s !== 'noPrompt');
-  const kb = Object.keys(b).filter(s => s !== 'remoteDNS' && s !== 'noPrompt');
+  let ka = Object.keys(a).filter(s => s !== 'remoteDNS' && s !== 'noPrompt');
+  let kb = Object.keys(b).filter(s => s !== 'remoteDNS' && s !== 'noPrompt');
+  // remove empty array; bypassList = []
+  ka = ka.filter(k => (Array.isArray(a[k]) ? a[k].length : true));
+  kb = kb.filter(k => (Array.isArray(b[k]) ? b[k].length : true));
 
   if (ka.length !== kb.length) {
     return false;

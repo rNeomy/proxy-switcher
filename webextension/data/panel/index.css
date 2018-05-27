@@ -32,6 +32,11 @@ input[type=text] {
 }
 input[type=button] {
   font-size: 11px;
+  border: solid 1px #ccc;
+  cursor: pointer;
+}
+input[type=button]:disabled {
+  opacity: 0.5;
 }
 input[type=number],
 input[type=text] {

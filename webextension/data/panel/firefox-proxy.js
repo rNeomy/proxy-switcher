@@ -37,7 +37,7 @@ if (/Firefox/.test(navigator.userAgent)) {
         socksVersion: mode === 'fixed_servers' && value.rules.proxyForHttp.scheme === 'socks5' ? 5 : 4,
         proxyDNS: value.remoteDNS,
         autoLogin: value.noPrompt,
-        passthrough: mode === 'fixed_servers' && value.rules.bypassList.length ? value.rules.bypassList.join(', ') : ''
+        passthrough: mode === 'fixed_servers' && value.rules.bypassList && value.rules.bypassList.length ? value.rules.bypassList.join(', ') : ''
       };
 
       if (mode === 'fixed_servers') {
