@@ -35,9 +35,6 @@ input[type=button] {
   border: solid 1px #ccc;
   cursor: pointer;
 }
-input[type=button]:disabled {
-  opacity: 0.5;
-}
 input[type=number],
 input[type=text] {
   border:  solid 1px #c5c5c5;
@@ -255,11 +252,6 @@ option {
   background-color: #52af52;
   border-color: #43a443;
 }
-.modify input:disabled {
-  background-color: #ddd;
-  border-color: #c5c5c5;
-  opacity: 1.0;
-}
 .flex {
   display: flex;
 }
@@ -277,6 +269,12 @@ option {
 }
 [firefox] {
   display: none;
+}
+button:disabled,
+input[type=button]:disabled {
+  background-color: #ddd;
+  border-color: #c5c5c5;
+  opacity: 1.0;
 }
 @-moz-document url-prefix() {
   [no-firefox] {

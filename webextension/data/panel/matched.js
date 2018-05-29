@@ -1,6 +1,15 @@
 'use strict';
 
 {
+  const shuffle = array => {
+    for (let i = array.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+
+    return array;
+  };
+
   const root = document.getElementById('explore');
 
   const INC = Number(root.dataset.inc || 100);
@@ -9,9 +18,10 @@
   const style = document.createElement('style');
   style.textContent = `
   #explore {
-    background: #fff;
+    background-color: #fff;
     position: relative;
-    color: rgb(158, 158, 158);
+    color: #969696;
+    user-select: none;
   }
   #explore[data-loaded=true] {
     margin: 4px;
@@ -25,36 +35,45 @@
     top: 4px;
     cursor: pointer;
   }
-  #explore>div {
-    display: flex;
-    justify-content: space-around;
-    margin: auto;
+  #explore>table {
     margin-top: 10px;
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
   }
   #explore a {
-    background-size: 32px;
-    padding-left: 37px;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
     text-decoration: none;
     color: #000;
-    background-repeat: no-repeat;
-    background-position: center left;
-    max-width: calc(100% / 3 - 50px);
-  }
-  #explore a:not(:last-child) {
-    margin-right: 20px;
-  }
-  #explore a>span {
-    border-left: solid 1px #ccc;
-    padding-left: 5px;
     display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #explore td:first-child a {
+    justify-content: flex-start;
+  }
+  #explore td:last-child a {
+    justify-content: flex-end;
+  }
+  #explore .title {
+    border-left: solid 1px #ccc;
+    display: inline-block;
     align-items: center;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    display: block;
+    padding-left: 5px;
+  }
+  #explore .icon {
+    min-width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #fff;
+    margin-right: 5px;
+    font-size: 10px;
+    font-weight: 100;
   }
   #explore .explore {
     position: absolute;
@@ -62,62 +81,10 @@
     z-index: 1000000;
     cursor: pointer;
     font-size: 15px;
-  }
-  `;
+  }`;
   document.documentElement.appendChild(style);
 
-  const get = async() => {
-    const {homepage_url, short_name} = chrome.runtime.getManifest();
-    const resp = await fetch(homepage_url + '?rd=matched&type=json&name=' + short_name);
-    if (resp.ok) {
-      const json = await resp.json();
-      localStorage.setItem('explore-json', JSON.stringify(json));
-      localStorage.setItem('explore-date', Date.now());
-      return json;
-    }
-    return [];
-  };
-  const build = json => {
-    if (json.length === 0) {
-      return;
-    }
-    root.dataset.loaded = true;
-    root.textContent = 'Explore more';
-    const div = document.createElement('div');
-    const span = document.createElement('span');
-    span.classList.add('close');
-    span.textContent = '✕';
-    span.onclick = () => {
-      root.textContent = '';
-      root.dataset.loaded = false;
-      localStorage.setItem('explore-count', 0);
-      explore();
-    };
-    root.appendChild(span);
-    json.forEach(({title, icon, link, description}) => {
-      const a = document.createElement('a');
-      a.setAttribute('style', `background-image: url(${icon});`);
-      a.target = '_blank';
-      a.href = link + '?context=explore';
-      const span = document.createElement('span');
-      a.title = description || title;
-      span.textContent = title;
-      a.appendChild(span);
-      div.appendChild(a);
-      root.appendChild(div);
-    });
-  };
-  const cload = () => {
-    let json = localStorage.getItem('explore-json');
-    if (json) {
-      const d = Number(localStorage.getItem('explore-date'));
-      if (Date.now() - d < 3 * 24 * 60 * 60 * 1000) {
-        json = JSON.parse(json);
-        return build(json);
-      }
-    }
-    get().then(build).catch(e => {});
-  };
+  const cload = () => fetch('matched.json').then(r => r.json()).then(build);
   const explore = () => {
     const span = document.createElement('span');
     span.textContent = '↯';
@@ -129,6 +96,54 @@
       localStorage.setItem('explore-count', INC);
       cload();
     };
+  };
+  const build = json => {
+    if (json.length === 0) {
+      return;
+    }
+    root.dataset.loaded = true;
+    root.textContent = 'Explore more';
+    const table = document.createElement('table');
+    const tr = document.createElement('tr');
+    const span = document.createElement('span');
+    span.classList.add('close');
+    span.textContent = '✕';
+    span.onclick = () => {
+      root.textContent = '';
+      root.dataset.loaded = false;
+      localStorage.setItem('explore-count', 0);
+      explore();
+    };
+    root.appendChild(span);
+
+    const {homepage_url} = chrome.runtime.getManifest();
+    const origin = homepage_url.split('/').slice(0, -1).join('/');
+    const colors = shuffle(
+      ['524c84', '606470', '755da3', 'c06c84', '393e46', '446e5c', '693e52', '1d566e', '693e52', 'd95858', 'f27370']
+    );
+    shuffle(Object.entries(json)).slice(0, 3).forEach(([id, {name}], i) => {
+      const td = document.createElement('td');
+      const a = Object.assign(document.createElement('a'), {
+        target: '_blank',
+        title: 'Click to browse',
+        href: origin + '/' + id + '.html?context=explore'
+      });
+
+      const icon = document.createElement('span');
+      icon.textContent = name.split(' ').slice(0, 2).map(s => s[0]).join('').toUpperCase();
+      icon.classList.add('icon');
+      icon.style['background-color'] = '#' + colors[i];
+      a.appendChild(icon);
+
+      const span = document.createElement('span');
+      span.classList.add('title');
+      span.textContent = name;
+      a.appendChild(span);
+      td.appendChild(a);
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+    root.appendChild(table);
   };
   const init = () => {
     if (count >= INC) {
@@ -150,5 +165,5 @@
       localStorage.setItem('explore-count', count + 1);
     }
   };
-  window.setTimeout(init, 1000);
+  init();
 }

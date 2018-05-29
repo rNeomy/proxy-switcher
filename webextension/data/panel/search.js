@@ -94,7 +94,19 @@ search.verify = proxy => new Promise((resolve, reject) => chrome.proxy.settings.
           await search.verify(proxy);
           log('Looks good!');
           app.emit('update-manual-tab', proxy);
-          ui.manual.profile.value = 'new proxy from ' + info.country;
+          ui.manual.profile.value = 'new proxy from ' + ({
+            BR: 'Brazil',
+            US: 'United States',
+            ID: 'Indonesia',
+            CN: 'China',
+            RU: 'Russia',
+            BD: 'Bangladesh',
+            IN: 'India',
+            TH: 'Thailand',
+            UA: 'Ukraine',
+            SG: 'Singapore',
+            ES: 'Spain'
+          }[info.country] || info.country);
           ui.manual.profile.dispatchEvent(new Event('input', {bubbles: true}));
         }
         catch (e) {

@@ -3,7 +3,7 @@
   "short_name": "proxy-switcher",
   "description": "Manage and switch between multiple proxies quickly and easily through profiles",
   "author": "Richard Neomy",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "manifest_version": 2,
   "default_locale": "en",
   "permissions": [
