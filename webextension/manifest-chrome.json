@@ -9,9 +9,9 @@
   "permissions": [
     "storage",
     "notifications",
+    "proxy",
     "*://*/*",
-    "webRequest",
-    "proxy"
+    "webRequest"
   ],
   "storage": {
     "managed_schema": "schema.json"
@@ -26,7 +26,6 @@
   "background": {
     "scripts": [
       "data/panel/utils.js",
-      "data/panel/firefox-proxy.js",
       "common.js"
     ]
   },
@@ -39,11 +38,5 @@
   "options_ui": {
     "page": "data/options/index.html",
     "chrome_style": true
-  },
-  "applications": {
-    "gecko": {
-      "id": "{e4a12b8a-ab12-449a-b70e-4f54ccaf235e}",
-      "strict_min_version": "60.0"
-    }
   }
 }

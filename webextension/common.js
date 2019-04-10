@@ -109,7 +109,7 @@ chrome.webRequest.onCompleted.addListener(d => {
   if (!tabs[tabId]) {
     return;
   }
-  const bol = d.statusCode < 200 || d.statusCode >= 400;
+  const bol = (d.statusCode < 200 || d.statusCode >= 400) && d.statusCode !== 101;
   if (bol) {
     tabs[tabId].push(d);
   }
