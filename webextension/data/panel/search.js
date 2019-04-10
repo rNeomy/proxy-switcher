@@ -12,7 +12,7 @@ search.fetch = (base, args = {}) => {
     .map(([k, v]) => `${k}=${v}`)
     .join('&'))
     .then(r => (
-      r.ok ? r.json() : Promise.reject(r.status === 403 ? 'Max limit reached' : 'Cannot connect to the server')
+      r.ok ? r.json() : Promise.reject(Error(r.status === 403 ? 'Max limit reached' : 'Cannot connect to the server'))
     ))
     .then(j => (j.error ? Promise.reject(j.error) : j));
 };
@@ -50,7 +50,7 @@ search.verify = proxy => new Promise((resolve, reject) => chrome.proxy.settings.
     search.ping('google.com').then(resolve, () => false),
     search.ping('bing.com').then(resolve, () => false),
     search.ping('yahoo.com').then(resolve, () => false)
-  ]).then(() => reject('Ping failed'));
+  ]).then(() => reject(Error('Ping failed')));
 }));
 
 {
@@ -65,21 +65,21 @@ search.verify = proxy => new Promise((resolve, reject) => chrome.proxy.settings.
       if (mode === 'fixed_servers') {
         return Promise.resolve();
       }
-      return new Promise(resolve => chrome.proxy.settings.set({ //clear proxy
+      return new Promise(resolve => chrome.proxy.settings.set({ // clear proxy
         value: {mode}
       }, resolve));
     };
     chrome.proxy.settings.get({}, ({value}) => {
-      chrome.storage.local.get({
-        server: 'https://gimmeproxy.com/api/getProxy',
+      app.storage({
+        'server': 'https://gimmeproxy.com/api/getProxy',
         'validate-mode': 'direct',
-        anonymity: '',
-        allowsRefererHeader: '',
-        allowsUserAgentHeader: '',
-        allowsCustomHeaders: '',
-        allowsCookies: '',
-        country: ''
-      }, async(prefs) => {
+        'anonymity': '',
+        'allowsRefererHeader': '',
+        'allowsUserAgentHeader': '',
+        'allowsCustomHeaders': '',
+        'allowsCookies': '',
+        'country': ''
+      }).then(async prefs => {
         await set(prefs['validate-mode']);
         Object.entries(prefs).forEach(([key, value]) => {
           if (!value) {

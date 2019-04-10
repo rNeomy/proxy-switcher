@@ -3,6 +3,8 @@
 var app = {};
 var _ = chrome.i18n.getMessage;
 
+app.storage = prefs => new Promise(resolve => chrome.storage.local.get(prefs, resolve));
+
 app.callbacks = {
   on: {},
   once: {}
@@ -28,7 +30,7 @@ app.notify = (e, callback) => chrome.notifications.create({
   type: 'basic',
   iconUrl: '/data/icons/48.png',
   title: chrome.runtime.getManifest().name,
-  message: e.message || e,
+  message: e.message || e
 }, callback);
 
 app.compare = (a, b) => {

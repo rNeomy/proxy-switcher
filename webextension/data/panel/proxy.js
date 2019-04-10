@@ -62,11 +62,11 @@ update((mode, config) => {
     });
   }
   else {
-    chrome.storage.local.get('last-manual', prefs => {
+    app.storage('last-manual').then(prefs => {
       if (prefs['last-manual']) {
         ui.manual.profile.value = prefs['last-manual'];
 
-        chrome.storage.local.get(null, prefs => {
+        app.storage('profile.' + prefs['last-manual']).then(prefs => {
           const profile = prefs['profile.' + prefs['last-manual']];
           app.emit('update-manual-tab', profile);
         });
@@ -85,11 +85,11 @@ update((mode, config) => {
       ui.pac.editor.value = config.value.pacScript.data;
     }
   }
-  chrome.storage.local.get({
+  app.storage({
     'last-pac': false,
     'script': false,
     'pac-type': isFirefox ? 'url' : 'data'
-  }, prefs => {
+  }).then(prefs => {
     if (prefs['last-pac'] && (mode !== 'pac_script' || !config.value.pacScript.url)) {
       ui.pac.input.dataset.value = ui.pac.input.value = prefs['last-pac'];
       ui.pac.input.dispatchEvent(new Event('keyup'));

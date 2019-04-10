@@ -205,7 +205,7 @@ option {
   right: 10px;
   z-index: 3;
   max-width: 50vw;
-  max-height: 50vh;
+  max-height: 30vh;
   overflow: hidden;
 }
 #notify>div {

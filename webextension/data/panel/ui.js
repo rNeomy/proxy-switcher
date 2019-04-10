@@ -89,7 +89,7 @@ ui.manual.http.port.addEventListener('input', ({target}) => {
   const parent = ui.manual.parent;
   let changed = [
     ...parent.querySelectorAll('[type=text]'),
-    ...parent.querySelectorAll('[type=number]'),
+    ...parent.querySelectorAll('[type=number]')
   ].reduce((p, c) => p || c.dataset.value !== c.value, false);
   changed = changed || [
     ...parent.querySelectorAll('[type=radio]'),
@@ -168,9 +168,9 @@ app.on('reset-manual-tab', (exceptions = []) => {
     }
   });
   // updating delete button status
-  chrome.storage.local.get({
+  app.storage({
     profiles: []
-  }, prefs => {
+  }).then(prefs => {
     const exist = prefs.profiles.indexOf(ui.manual.profile.value) !== -1;
     ui.manual.delete.disabled = !exist;
   });
@@ -181,8 +181,8 @@ app.on('reset-manual-tab', (exceptions = []) => {
 // searching profiles
 ui.manual.profile.addEventListener('input', ({target}) => {
   const value = target.value;
-
-  chrome.storage.local.get(null, prefs => {
+console.log('profile.' + value);
+  app.storage('profile.' + value).then(prefs => {
     const profile = prefs['profile.' + value];
     if (profile) {
       app.emit('update-manual-tab', profile);
@@ -193,9 +193,9 @@ ui.manual.profile.addEventListener('input', ({target}) => {
 // searching pacs
 ui.pac.input.addEventListener('keyup', ({target, isTrusted}) => {
   const value = target.value;
-  chrome.storage.local.get({
+  app.storage({
     pacs: []
-  }, prefs => {
+  }).then(prefs => {
     const index = prefs.pacs.indexOf(value);
     if (index !== -1) {
       ui.pac.input.dataset.value = value;
@@ -234,10 +234,12 @@ app.on('proxy-changed', mode => {
 });
 
 app.on('notify', msg => {
+  const n = document.getElementById('notify');
   msg = msg.error || msg.message || msg;
   const div = document.createElement('div');
   div.textContent = (new Date()).toTimeString().split(' ')[0] + ': ' + msg;
-  document.getElementById('notify').appendChild(div);
+  n.textContent = '';
+  n.appendChild(div);
   div.scrollIntoView();
-  window.setTimeout(() => document.getElementById('notify').removeChild(div), 5000);
+  window.setTimeout(() => div.remove(), 5000);
 });

@@ -1,18 +1,18 @@
 'use strict';
 
 var config = {
-  text: false,
-  counter: true,
-  color: '#666666',
-  server: 'https://gimmeproxy.com/api/getProxy',
+  'text': false,
+  'counter': true,
+  'color': '#666666',
+  'server': 'https://gimmeproxy.com/api/getProxy',
   'validate-mode': 'direct',
-  anonymity: '',
-  allowsRefererHeader: '',
-  allowsUserAgentHeader: '',
-  allowsCustomHeaders: '',
-  allowsCookies: '',
-  country: '',
-  faqs: true,
+  'anonymity': '',
+  'allowsRefererHeader': '',
+  'allowsUserAgentHeader': '',
+  'allowsCustomHeaders': '',
+  'allowsCookies': '',
+  'country': '',
+  'faqs': true,
   'startup-proxy': 'no'
 };
 
@@ -24,19 +24,19 @@ function save() {
   localStorage.setItem('pac-proxy', document.getElementById('pac-proxy').value);
 
   chrome.storage.local.set({
-    text: document.getElementById('text').checked,
-    counter: document.getElementById('counter').checked,
-    color: document.getElementById('color').value,
-    server: document.getElementById('server').value,
+    'text': document.getElementById('text').checked,
+    'counter': document.getElementById('counter').checked,
+    'color': document.getElementById('color').value,
+    'server': document.getElementById('server').value,
     'validate-mode': document.getElementById('validate-mode').value,
-    anonymity: document.getElementById('anonymity').value,
-    allowsRefererHeader: document.getElementById('allowsRefererHeader').value,
-    allowsUserAgentHeader: document.getElementById('allowsUserAgentHeader').value,
-    allowsCustomHeaders: document.getElementById('allowsCustomHeaders').value,
-    allowsCookies: document.getElementById('allowsCookies').value,
-    country: document.getElementById('country').value,
-    faqs: document.getElementById('faqs').checked,
-    'startup-proxy': document.getElementById('startup-proxy').value,
+    'anonymity': document.getElementById('anonymity').value,
+    'allowsRefererHeader': document.getElementById('allowsRefererHeader').value,
+    'allowsUserAgentHeader': document.getElementById('allowsUserAgentHeader').value,
+    'allowsCustomHeaders': document.getElementById('allowsCustomHeaders').value,
+    'allowsCookies': document.getElementById('allowsCookies').value,
+    'country': document.getElementById('country').value,
+    'faqs': document.getElementById('faqs').checked,
+    'startup-proxy': document.getElementById('startup-proxy').value
   }, () => {
     const status = document.getElementById('status');
     status.textContent = 'Options saved.';
@@ -46,6 +46,11 @@ function save() {
     setTimeout(() => status.textContent = '', 750);
   });
 }
+
+var storage = prefs => new Promise(resolve => chrome.storage.managed.get(prefs, ps => {
+  chrome.storage.local.get(chrome.runtime.lastError ? prefs : ps || prefs, resolve);
+}));
+
 
 function restore() {
   document.getElementById('no-proxy').value =
@@ -58,7 +63,7 @@ function restore() {
     localStorage.getItem('manual-proxy') || '#fd0e1c';
   document.getElementById('pac-proxy').value =
     localStorage.getItem('pac-proxy') || '#fb9426';
-  chrome.storage.local.get(config, prefs => {
+  storage(config).then(prefs => {
     Object.entries(prefs).forEach(([key, value]) => {
       document.getElementById(key)[typeof value === 'boolean' ? 'checked' : 'value'] = value;
     });
@@ -80,7 +85,7 @@ document.getElementById('export').addEventListener('click', () => {
     Object.assign(document.createElement('a'), {
       href: objectURL,
       type: 'application/json',
-      download: 'proxy-switcher-preferences.json',
+      download: 'proxy-switcher-preferences.json'
     }).dispatchEvent(new MouseEvent('click'));
     setTimeout(() => URL.revokeObjectURL(objectURL));
   });

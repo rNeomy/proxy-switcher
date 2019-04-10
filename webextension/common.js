@@ -5,13 +5,10 @@ var _ = chrome.i18n.getMessage;
 var isFirefox = /Firefox/.test(navigator.userAgent);
 
 var prefs = {
-  color: '#848384',
-  counter: true,
-  text: false, // icon text,
-  version: null,
-  faqs: true,
-  'last-update': 0,
-  ffcurent: null,
+  'color': '#848384',
+  'counter': true,
+  'text': false, // icon text,
+  'ffcurent': null,
   'startup-proxy': 'no'
 };
 
@@ -25,10 +22,10 @@ var icon = (() => {
   ctx.fillStyle = '#626262';
 
   ctx.fill(
-    new Path2D('M28.256,39.289v-1.26h-8.512v1.26c0,1.393-1.129,2.521-2.522,2.521h-2.079v2.523h17.713v-2.523h-2.078    C29.385,41.811,28.256,40.682,28.256,39.289z')
+    new Path2D('M28.256,39.289v-1.26h-8.512v1.26c0,1.393-1.129,2.521-2.522,2.521h-2.079v2.523h17.713v-2.523h-2.078 C29.385,41.811,28.256,40.682,28.256,39.289z')
   );
   ctx.fill(
-    new Path2D('M45.396,3.667h-0.273H2.859H2.605H0.021V6.25v0.648v26.895v0.391v2.584h2.583h0.589h40.982h1.22h2.583    v-2.584v-0.883V6.846V6.25V3.667H45.396z M24,35.23c-0.696,0-1.261-0.564-1.261-1.262c0-0.695,0.565-1.26,1.261-1.26    c0.697,0,1.261,0.564,1.261,1.26C25.261,34.666,24.697,35.23,24,35.23z M45.435,6.846v0.919v23.644H2.565V7.765V6.898V6.009h0.293    h1.359h39.485h1.419h0.312V6.846z')
+    new Path2D('M45.396,3.667h-0.273H2.859H2.605H0.021V6.25v0.648v26.895v0.391v2.584h2.583h0.589h40.982h1.22h2.583 v-2.584v-0.883V6.846V6.25V3.667H45.396z M24,35.23c-0.696,0-1.261-0.564-1.261-1.262c0-0.695,0.565-1.26,1.261-1.26    c0.697,0,1.261,0.564,1.261,1.26C25.261,34.666,24.697,35.23,24,35.23z M45.435,6.846v0.919v23.644H2.565V7.765V6.898V6.009h0.293    h1.359h39.485h1.419h0.312V6.846z')
   );
 
   return config => {
@@ -69,7 +66,7 @@ var icon = (() => {
 
     chrome.browserAction.setIcon({
       imageData: ctx.getImageData(0, 0, 48, 48)
-    });
+    }, () => chrome.runtime.lastError);
 
     let title = 'Proxy Switcher\n\n';
     title += ({
@@ -83,7 +80,7 @@ var icon = (() => {
       'system': _('modeSystem')
     })[mode];
 
-    chrome.browserAction.setTitle({title});
+    chrome.browserAction.setTitle({title}, () => chrome.runtime.lastError);
   };
 })();
 
@@ -100,8 +97,7 @@ function badge(tabId) {
   chrome.browserAction.setBadgeText({
     tabId,
     text: tabs[tabId] && tabs[tabId].length ? String(tabs[tabId].length) : ''
-  });
-  chrome.runtime.lastError;
+  }, () => chrome.runtime.lastError);
 }
 chrome.webRequest.onBeforeRequest.addListener(({tabId}) => {
   if (tabs[tabId]) {
@@ -143,7 +139,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
 });
 
 // init
-chrome.storage.local.get(null, ps => {
+chrome.storage.local.get(prefs, ps => {
   Object.assign(prefs, ps);
   // badge color
   chrome.browserAction.setBadgeBackgroundColor({
@@ -167,24 +163,24 @@ chrome.storage.local.get(null, ps => {
       }
     }, icon);
   }
-  // FAQs
-  const version = chrome.runtime.getManifest().version;
-
-  if (prefs.version ? (prefs.faqs && prefs.version !== version) : true) {
-    const now = Date.now();
-    const doUpdate = (now - prefs['last-update']) / 1000 / 60 / 60 / 24 > 30;
-    chrome.storage.local.set({
-      version,
-      'last-update': doUpdate ? Date.now() : prefs['last-update']
-    }, () => {
-      // do not display the FAQs page if last-update occurred less than 30 days ago.
-      if (doUpdate) {
-        const p = Boolean(prefs.version);
-        chrome.tabs.create({
-          url: chrome.runtime.getManifest().homepage_url + '?version=' + version +
-            '&type=' + (p ? ('upgrade&p=' + prefs.version) : 'install'),
-          active: p === false
-        });
+});
+// dealing with managed storage
+chrome.storage.managed.get({
+  'import-json': '',
+  'import-version': 0
+}, mps => {
+  if (!chrome.runtime.lastError && mps && mps['import-json'] && mps['import-version'] > 0) {
+    chrome.storage.local.get({
+      'import-version': 0
+    }, prefs => {
+      if (prefs['import-version'] < mps['import-version']) {
+        const json = JSON.parse(mps['import-json']);
+        chrome.storage.local.set(Object.assign({
+          'import-version': mps['import-version']
+        }, json), () => chrome.runtime.reload());
+      }
+      else {
+        console.log('recent managed storage. not updating');
       }
     });
   }
@@ -209,10 +205,32 @@ chrome.storage.onChanged.addListener(ps => {
   }
 });
 
-// Feedback
 {
-  const {name, version} = chrome.runtime.getManifest();
-  chrome.runtime.setUninstallURL(
-    chrome.runtime.getManifest().homepage_url + '?rd=feedback&name=' + name + '&version=' + version
-  );
+  const {onInstalled, setUninstallURL, getManifest} = chrome.runtime;
+  const {name, version} = getManifest();
+  const page = getManifest().homepage_url;
+  onInstalled.addListener(({reason, previousVersion}) => {
+    const storage = prefs => new Promise(resolve => chrome.storage.managed.get(prefs, ps => {
+      chrome.storage.local.get(chrome.runtime.lastError ? prefs : ps || prefs, resolve);
+    }));
+
+    storage({
+      'faqs': true,
+      'last-update': 0
+    }).then(prefs => {
+      if (reason === 'install' || (prefs.faqs && reason === 'update')) {
+        const doUpdate = (Date.now() - prefs['last-update']) / 1000 / 60 / 60 / 24 > 45;
+        if (doUpdate && previousVersion !== version) {
+          chrome.tabs.create({
+            url: page + '?version=' + version +
+              (previousVersion ? '&p=' + previousVersion : '') +
+              '&type=' + reason,
+            active: reason === 'install'
+          });
+          chrome.storage.local.set({'last-update': Date.now()});
+        }
+      }
+    });
+  });
+  setUninstallURL(page + '?rd=feedback&name=' + encodeURIComponent(name) + '&version=' + version);
 }

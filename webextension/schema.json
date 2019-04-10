@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "properties": {
+    "import-version": {
+      "title": "The version of the imported index. It will be used to determine whether replacing local storage is required or not. Need to be a non-zero integer.",
+      "type": "integer"
+    },
+    "import-json": {
+      "title": "This is the JSON string that overwrites defaults. A user can alter preferences later. Note that if a new version is imported, the user defined preferences will be overwritten.",
+      "type": "string"
+    },
+    "faqs": {
+      "title": "Open FAQs page on updates",
+      "type": "boolean"
+    }
+  }
+}

@@ -6,9 +6,9 @@ document.addEventListener('click', ({target}) => {
   if (cmd === 'set-pac') {
     const pac = ui.pac.input.value;
     ui.pac.input.dataset.value = pac;
-    chrome.storage.local.get({
+    app.storage({
       pacs: []
-    }, prefs => {
+    }).then(prefs => {
       prefs.pacs.push(pac);
       prefs.pacs = prefs.pacs.filter((p, i, l) => p && l.indexOf(p) === i);
       chrome.storage.local.set(prefs, () => {
@@ -20,9 +20,9 @@ document.addEventListener('click', ({target}) => {
   }
   else if (cmd === 'delete-pac') {
     const pac = ui.pac.input.value;
-    chrome.storage.local.get({
+    app.storage({
       pacs: []
-    }, prefs => {
+    }).then(prefs => {
       const index = prefs.pacs.indexOf(pac);
       if (index !== -1) {
         prefs.pacs.splice(index, 1);
@@ -40,9 +40,9 @@ document.addEventListener('click', ({target}) => {
 });
 
 app.on('pacs-updated', () => {
-  chrome.storage.local.get({
+  app.storage({
     pacs: []
-  }, prefs => {
+  }).then(prefs => {
     ui.pac.urls.textContent = '';
     prefs.pacs.forEach(pac => {
       const option = document.createElement('option');
