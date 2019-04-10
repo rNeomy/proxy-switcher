@@ -1,5 +1,6 @@
 'use strict';
 
+var isFirefox = /Firefox/.test(navigator.userAgent);
 var app = {};
 var _ = chrome.i18n.getMessage;
 
@@ -34,8 +35,13 @@ app.notify = (e, callback) => chrome.notifications.create({
 }, callback);
 
 app.compare = (a, b) => {
-  let ka = Object.keys(a).filter(s => s !== 'remoteDNS' && s !== 'noPrompt');
-  let kb = Object.keys(b).filter(s => s !== 'remoteDNS' && s !== 'noPrompt');
+  const ignore = ['remoteDNS', 'noPrompt'];
+  if (isFirefox) {
+    ignore.push('fallbackProxy');
+  }
+  let ka = Object.keys(a).filter(s => ignore.indexOf(s) === -1);
+  let kb = Object.keys(b).filter(s => ignore.indexOf(s) === -1);
+
   // remove empty array; bypassList = []
   ka = ka.filter(k => (Array.isArray(a[k]) ? a[k].length : true));
   kb = kb.filter(k => (Array.isArray(b[k]) ? b[k].length : true));

@@ -1,7 +1,6 @@
-/* globals app, ui, profile, _ */
+/* globals app, ui, profile, _, isFirefox */
 'use strict';
 
-const isFirefox = /Firefox/.test(navigator.userAgent);
 if (isFirefox === false) {
   const proxy = chrome.proxy.settings.set;
   chrome.proxy.settings.set = function(config) {

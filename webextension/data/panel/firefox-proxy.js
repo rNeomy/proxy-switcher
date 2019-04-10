@@ -26,7 +26,6 @@ if (/Firefox/.test(navigator.userAgent)) {
   chrome.proxy.convert = {
     toFF: ({value}) => {
       const mode = value.mode;
-      const rule = value.rules ? Object.values(value.rules)[0] : {};
       const settings = {
         proxyType: {
           'direct': 'none',
@@ -36,7 +35,7 @@ if (/Firefox/.test(navigator.userAgent)) {
           'pac_script': 'autoConfig'
         }[mode],
         autoConfigUrl: mode === 'pac_script' ? value.pacScript.url : '',
-        socksVersion: mode === 'fixed_servers' && rule.scheme === 'socks5' ? 5 : 4,
+        socksVersion: mode === 4,
         proxyDNS: value.remoteDNS,
         autoLogin: value.noPrompt,
         passthrough: mode === 'fixed_servers' && value.rules.bypassList && value.rules.bypassList.length ? value.rules.bypassList.join(', ') : ''
@@ -44,6 +43,10 @@ if (/Firefox/.test(navigator.userAgent)) {
 
       if (mode === 'fixed_servers') {
         const rules = value.rules;
+        const rule = rules.proxyForHttp || rules.proxyForHttps || rules.proxyForFtp || rules.fallbackProxy;
+        if (rule.scheme === 'socks5') {
+          settings.socksVersion = 5;
+        }
         const url = ({host, port, scheme}) => {
           if (host && port) {
             return (scheme === 'https' ? 'https://' : '') + (host.trim().replace(/.*:\/\//, '') + ':' + port);
@@ -52,6 +55,7 @@ if (/Firefox/.test(navigator.userAgent)) {
             return '';
           }
         };
+
         if (rule.scheme.startsWith('socks')) {
           settings.http = settings.ssl = settings.ftp = '';
           settings.socks = url(rule);
@@ -104,10 +108,9 @@ if (/Firefox/.test(navigator.userAgent)) {
           const [host, port] = url.split('://')[0].split(':');
           return {scheme, host, port: Number(port)};
         };
-        config.value.rules.proxyForFtp = parse(value.ftp);
-        config.value.rules.proxyForHttp = parse(value.http);
-        config.value.rules.proxyForHttps = parse(value.ssl);
-        config.value.rules.fallbackProxy = parse(value.socks);
+        config.value.rules.proxyForFtp = parse(value.ftp || value.socks);
+        config.value.rules.proxyForHttp = parse(value.http || value.socks);
+        config.value.rules.proxyForHttps = parse(value.ssl || value.socks);
       }
       return config;
     }
@@ -116,7 +119,7 @@ if (/Firefox/.test(navigator.userAgent)) {
   chrome.proxy.settings.get = (prop, callback) => browser.proxy.settings.get({})
     .then(settings => callback(chrome.proxy.convert.fromFF(settings)));
 
-  chrome.proxy.settings.set = async (config, callback = function() {}) => {
+  chrome.proxy.settings.set = async(config, callback = function() {}) => {
     const settings = chrome.proxy.convert.toFF(config);
     // console.log(settings);
     await browser.proxy.settings.clear({});

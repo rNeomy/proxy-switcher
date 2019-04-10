@@ -185,7 +185,7 @@ app.on('reset-manual-tab', (exceptions = []) => {
 // searching profiles
 ui.manual.profile.addEventListener('input', ({target}) => {
   const value = target.value;
-console.log('profile.' + value);
+
   app.storage('profile.' + value).then(prefs => {
     const profile = prefs['profile.' + value];
     if (profile) {
