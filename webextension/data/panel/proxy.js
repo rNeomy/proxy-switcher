@@ -88,8 +88,11 @@ update((mode, config) => {
   app.storage({
     'last-pac': false,
     'script': false,
-    'pac-type': isFirefox ? 'url' : 'data'
+    'pac-type': 'data'
   }).then(prefs => {
+    if (isFirefox) {
+      prefs['pac-type'] = 'url';
+    }
     if (prefs['last-pac'] && (mode !== 'pac_script' || !config.value.pacScript.url)) {
       ui.pac.input.dataset.value = ui.pac.input.value = prefs['last-pac'];
       ui.pac.input.dispatchEvent(new Event('keyup'));

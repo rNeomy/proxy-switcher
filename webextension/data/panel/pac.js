@@ -34,6 +34,13 @@ document.addEventListener('click', ({target}) => {
       }
     });
   }
+  else if (cmd === 'reload-pac') {
+    const url = ui.pac.input.value;
+    ui.pac.input.value = 'http://127.0.0.1:8888/dummy.pac';
+    app.emit('change-proxy', 'pac_script');
+    ui.pac.input.value = url;
+    app.emit('change-proxy', 'pac_script');
+  }
   else if (cmd === 'open-options') {
     chrome.runtime.openOptionsPage();
   }

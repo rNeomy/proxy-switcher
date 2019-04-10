@@ -57,13 +57,13 @@
           <td>FTP Proxy:</td>
           <td><input type="text" placeholder="0.0.0.0" value="127.0.0.1" data-value="127.0.0.1"></td>
           <td>Port:</td>
-          <td><input type="number" value="8888" data-value="8888"</td>
+          <td><input type="number" value="8888" data-value="8888"></td>
         </tr>
         <tr data-scheme="others">
           <td>Fallback Proxy:</td>
           <td><input no-firefox type="text" placeholder="0.0.0.0" value="" data-value=""></td>
           <td>Port:</td>
-          <td><input no-firefox type="number" value="" data-value=""</td>
+          <td><input no-firefox type="number" value="" data-value=""></td>
         </tr>
         <tr data-type="server-type">
           <td>Server Type:</td>
@@ -102,6 +102,7 @@
         <div class="flex wide">
           <input type="text" placeholder="http://..." for="pac-1" list="pacs" data-value="http://example.com/sample.pac" value="http://example.com/sample.pac">
           <datalist id="pacs"></datalist>
+          <input type="button" value="" id="pac-reload" data-cmd="reload-pac">
           <div class="modify">
             <input type="button" disabled="true" data-cmd="delete-pac"><!--
          --><input type="button" disabled="true" data-cmd="set-pac">

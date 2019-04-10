@@ -35,7 +35,7 @@ if (/Firefox/.test(navigator.userAgent)) {
           'pac_script': 'autoConfig'
         }[mode],
         autoConfigUrl: mode === 'pac_script' ? value.pacScript.url : '',
-        socksVersion: mode === 4,
+        socksVersion: 4,
         proxyDNS: value.remoteDNS,
         autoLogin: value.noPrompt,
         passthrough: mode === 'fixed_servers' && value.rules.bypassList && value.rules.bypassList.length ? value.rules.bypassList.join(', ') : ''
@@ -119,7 +119,7 @@ if (/Firefox/.test(navigator.userAgent)) {
   chrome.proxy.settings.get = (prop, callback) => browser.proxy.settings.get({})
     .then(settings => callback(chrome.proxy.convert.fromFF(settings)));
 
-  chrome.proxy.settings.set = async(config, callback = function() {}) => {
+  chrome.proxy.settings.set = async (config, callback = function() {}) => {
     const settings = chrome.proxy.convert.toFF(config);
     // console.log(settings);
     await browser.proxy.settings.clear({});

@@ -175,6 +175,13 @@ option {
   resize: none;
   text-indent: 0;
 }
+#pac-reload {
+  min-width: 40px;
+  width: 40px;
+  background: url(update.svg) center center no-repeat;
+  background-size: 16px;
+  margin-left: -1px;
+}
 #pac label {
   min-width: 60px;
 }
