@@ -63,11 +63,12 @@ update((mode, config) => {
   }
   else {
     app.storage('last-manual').then(prefs => {
-      if (prefs['last-manual']) {
-        ui.manual.profile.value = prefs['last-manual'];
+      const name = prefs['last-manual'];
+      if (name) {
+        ui.manual.profile.value = name;
 
-        app.storage('profile.' + prefs['last-manual']).then(prefs => {
-          const profile = prefs['profile.' + prefs['last-manual']];
+        app.storage('profile.' + name).then(prefs => {
+          const profile = prefs['profile.' + name];
           app.emit('update-manual-tab', profile);
         });
       }

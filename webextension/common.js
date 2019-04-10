@@ -9,7 +9,13 @@ var prefs = {
   'counter': true,
   'text': false, // icon text,
   'ffcurent': null,
-  'startup-proxy': 'no'
+  'startup-proxy': 'no',
+  'color-auto_detect': '#2124fc',
+  'color-direct': '#000',
+  'color-fixed_servers': '#fd0e1c',
+  'color-pac_script_url': '#fb9426',
+  'color-pac_script_data': '#fb9426',
+  'color-system': '#31736b'
 };
 
 /* icon color */
@@ -34,20 +40,11 @@ var icon = (() => {
       mode = config.value.pacScript && config.value.pacScript.url ? 'pac_script_url' : 'pac_script_data';
     }
 
-    const map = {
-      'auto_detect': localStorage.getItem('auto-proxy') || '#2124fc',
-      'direct': localStorage.getItem('no-proxy') || '#000',
-      'fixed_servers': localStorage.getItem('manual-proxy') || '#fd0e1c',
-      'pac_script_url': localStorage.getItem('pac-proxy') || '#fb9426',
-      'pac_script_data': localStorage.getItem('pac-proxy') || '#fb9426',
-      'system': localStorage.getItem('system-proxy') || '#31736b'
-    };
-
-    ctx.fillStyle = map[mode];
+    ctx.fillStyle = prefs['color-' + mode];
     ctx.fillRect(5.04, 8.652, 37.83, 20.176);
 
     if (mode.startsWith('pac_script')) {
-      ctx.fillStyle = mode === 'pac_script_url' ? map['system'] : map['fixed_servers'];
+      ctx.fillStyle = mode === 'pac_script_url' ? prefs['color-system'] : prefs['color-fixed_servers'];
       ctx.fillRect(5.04, 8.652, 37.83 / 2, 20.176);
     }
     if (mode === 'fixed_servers' && prefs.text) {

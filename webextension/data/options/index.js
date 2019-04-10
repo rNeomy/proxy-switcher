@@ -13,16 +13,16 @@ var config = {
   'allowsCookies': '',
   'country': '',
   'faqs': true,
-  'startup-proxy': 'no'
+  'startup-proxy': 'no',
+  'color-auto_detect': '#2124fc',
+  'color-direct': '#000',
+  'color-fixed_servers': '#fd0e1c',
+  'color-pac_script_url': '#fb9426',
+  'color-pac_script_data': '#fb9426',
+  'color-system': '#31736b'
 };
 
 function save() {
-  localStorage.setItem('no-proxy', document.getElementById('no-proxy').value);
-  localStorage.setItem('auto-proxy', document.getElementById('auto-proxy').value);
-  localStorage.setItem('system-proxy', document.getElementById('system-proxy').value);
-  localStorage.setItem('manual-proxy', document.getElementById('manual-proxy').value);
-  localStorage.setItem('pac-proxy', document.getElementById('pac-proxy').value);
-
   chrome.storage.local.set({
     'text': document.getElementById('text').checked,
     'counter': document.getElementById('counter').checked,
@@ -36,7 +36,13 @@ function save() {
     'allowsCookies': document.getElementById('allowsCookies').value,
     'country': document.getElementById('country').value,
     'faqs': document.getElementById('faqs').checked,
-    'startup-proxy': document.getElementById('startup-proxy').value
+    'startup-proxy': document.getElementById('startup-proxy').value,
+    'color-auto_detect': document.getElementById('color-auto_detect').value,
+    'color-direct': document.getElementById('color-direct').value,
+    'color-fixed_servers': document.getElementById('color-fixed_servers').value,
+    'color-pac_script_url': document.getElementById('color-pac_script_url').value,
+    'color-pac_script_data': document.getElementById('color-pac_script_data').value,
+    'color-system': document.getElementById('color-system').value
   }, () => {
     const status = document.getElementById('status');
     status.textContent = 'Options saved.';
@@ -53,16 +59,6 @@ var storage = prefs => new Promise(resolve => chrome.storage.managed.get(prefs, 
 
 
 function restore() {
-  document.getElementById('no-proxy').value =
-    localStorage.getItem('no-proxy') || '#000';
-  document.getElementById('auto-proxy').value =
-    localStorage.getItem('auto-proxy') || '#2124fc';
-  document.getElementById('system-proxy').value =
-    localStorage.getItem('system-proxy') || '#31736b';
-  document.getElementById('manual-proxy').value =
-    localStorage.getItem('manual-proxy') || '#fd0e1c';
-  document.getElementById('pac-proxy').value =
-    localStorage.getItem('pac-proxy') || '#fb9426';
   storage(config).then(prefs => {
     Object.entries(prefs).forEach(([key, value]) => {
       document.getElementById(key)[typeof value === 'boolean' ? 'checked' : 'value'] = value;

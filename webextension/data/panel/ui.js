@@ -40,16 +40,20 @@ var ui = {
   }
 };
 // colors
-document.querySelector('#tabs li.no-proxy').style['border-top-color'] =
-  localStorage.getItem('no-proxy') || '#000';
-document.querySelector('#tabs li.auto-proxy').style['border-top-color'] =
-  localStorage.getItem('auto-proxy') || '#2124fc';
-document.querySelector('#tabs li.system-proxy').style['border-top-color'] =
-  localStorage.getItem('system-proxy') || '#31736b';
-document.querySelector('#tabs li.manual-proxy').style['border-top-color'] =
-  localStorage.getItem('manual-proxy') || '#fd0e1c';
-document.querySelector('#tabs li.pac-proxy').style['border-top-color'] =
-  localStorage.getItem('pac-proxy') || '#fb9426';
+app.storage({
+  'color-auto_detect': '#2124fc',
+  'color-direct': '#000',
+  'color-fixed_servers': '#fd0e1c',
+  'color-pac_script_url': '#fb9426',
+  'color-pac_script_data': '#fb9426',
+  'color-system': '#31736b'
+}).then(prefs => {
+  document.querySelector('#tabs li.no-proxy').style['border-top-color'] = prefs['color-direct'];
+  document.querySelector('#tabs li.auto-proxy').style['border-top-color'] = prefs['color-auto_detect'];
+  document.querySelector('#tabs li.system-proxy').style['border-top-color'] = prefs['color-system'];
+  document.querySelector('#tabs li.manual-proxy').style['border-top-color'] = prefs['color-fixed_servers'];
+  document.querySelector('#tabs li.pac-proxy').style['border-top-color'] = prefs['color-pac_script_url'];
+});
 
 document.addEventListener('click', ({target, isTrusted}) => {
   // select radio buttons on focus
