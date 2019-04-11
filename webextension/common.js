@@ -15,7 +15,8 @@ var prefs = {
   'color-fixed_servers': '#fd0e1c',
   'color-pac_script_url': '#fb9426',
   'color-pac_script_data': '#fb9426',
-  'color-system': '#31736b'
+  'color-system': '#31736b',
+  'profiles': []
 };
 
 /* icon color */
@@ -24,9 +25,7 @@ var icon = (() => {
   canvas.width = 48;
   canvas.height = 48;
   const ctx = canvas.getContext('2d');
-
   ctx.fillStyle = '#626262';
-
   ctx.fill(
     new Path2D('M28.256,39.289v-1.26h-8.512v1.26c0,1.393-1.129,2.521-2.522,2.521h-2.079v2.523h17.713v-2.523h-2.078 C29.385,41.811,28.256,40.682,28.256,39.289z')
   );
@@ -50,7 +49,7 @@ var icon = (() => {
     if (mode === 'fixed_servers' && prefs.text) {
       const profile = (prefs.profiles || []).filter(p => {
         const profile = prefs['profile.' + p];
-        return app.compare(profile, config);
+        return profile && app.compare(profile, config);
       }).shift();
       if (profile) {
         ctx.fillStyle = '#fff';
@@ -136,7 +135,7 @@ chrome.runtime.onMessage.addListener((request, sender, response) => {
 });
 
 // init
-chrome.storage.local.get(prefs, ps => {
+chrome.storage.local.get(null, ps => {
   Object.assign(prefs, ps);
   // badge color
   chrome.browserAction.setBadgeBackgroundColor({

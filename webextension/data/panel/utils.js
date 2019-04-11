@@ -35,7 +35,7 @@ app.notify = (e, callback) => chrome.notifications.create({
 }, callback);
 
 app.compare = (a, b) => {
-  const ignore = ['remoteDNS', 'noPrompt'];
+  const ignore = ['remoteDNS', 'noPrompt', 'levelOfControl'];
   if (isFirefox) {
     ignore.push('fallbackProxy');
   }
