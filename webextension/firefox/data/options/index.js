@@ -3,7 +3,7 @@
 var info = document.getElementById('status');
 
 function save() {
-  chrome.storage.local.set({
+  const perform = () => chrome.storage.local.set({
     'text': document.getElementById('text').checked,
     'counter': document.getElementById('counter').checked,
     'color': document.getElementById('color').value,
@@ -28,6 +28,23 @@ function save() {
     chrome.runtime.getBackgroundPage(bg => bg.chrome.proxy.settings.get({}, bg.icon));
     setTimeout(() => info.textContent = '', 750);
   });
+  if (document.getElementById('counter').checked) {
+    chrome.permissions.request({
+      permissions: ['webRequest'],
+      origins: ['*://*/*']
+    }, granted => {
+      if (granted) {
+        perform();
+      }
+      else {
+        document.getElementById('counter').checked = false;
+        perform();
+      }
+    });
+  }
+  else {
+    perform();
+  }
 }
 
 var storage = prefs => new Promise(resolve => chrome.storage.managed.get(prefs, ps => {
@@ -38,7 +55,7 @@ var storage = prefs => new Promise(resolve => chrome.storage.managed.get(prefs, 
 function restore() {
   storage({
     'text': false,
-    'counter': true,
+    'counter': false,
     'color': '#666666',
     'server': 'https://gimmeproxy.com/api/getProxy',
     'validate-mode': 'direct',

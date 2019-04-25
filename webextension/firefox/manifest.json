@@ -3,15 +3,17 @@
   "short_name": "proxy-switcher",
   "description": "Manage and switch between multiple proxies quickly and easily through profiles",
   "author": "Richard Neomy",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "manifest_version": 2,
   "default_locale": "en",
   "permissions": [
     "storage",
     "notifications",
-    "*://*/*",
-    "webRequest",
     "proxy"
+  ],
+  "optional_permissions": [
+    "*://*/*",
+    "webRequest"
   ],
   "storage": {
     "managed_schema": "schema.json"

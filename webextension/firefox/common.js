@@ -6,7 +6,7 @@ var isFirefox = /Firefox/.test(navigator.userAgent);
 
 var prefs = {
   'color': '#848384',
-  'counter': true,
+  'counter': false,
   'text': false, // icon text,
   'ffcurent': null,
   'startup-proxy': 'no',
@@ -108,9 +108,11 @@ badge.uninstall = () => {
   })));
   chrome.tabs.onCreated.removeListener(badge.events.onCreated);
   chrome.tabs.onRemoved.removeListener(badge.events.onRemoved);
-  chrome.webRequest.onBeforeRequest.removeListener(badge.events.onBeforeRequest);
-  chrome.webRequest.onCompleted.removeListener(badge.events.onCompleted);
-  chrome.webRequest.onErrorOccurred.removeListener(badge.events.onErrorOccurred);
+  if (chrome.webRequest) {
+    chrome.webRequest.onBeforeRequest.removeListener(badge.events.onBeforeRequest);
+    chrome.webRequest.onCompleted.removeListener(badge.events.onCompleted);
+    chrome.webRequest.onErrorOccurred.removeListener(badge.events.onErrorOccurred);
+  }
 };
 badge.events = {
   onCreated: t => tabs[t.id] = [],
