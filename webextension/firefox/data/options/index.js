@@ -1,26 +1,6 @@
 'use strict';
 
-var config = {
-  'text': false,
-  'counter': true,
-  'color': '#666666',
-  'server': 'https://gimmeproxy.com/api/getProxy',
-  'validate-mode': 'direct',
-  'anonymity': '',
-  'allowsRefererHeader': '',
-  'allowsUserAgentHeader': '',
-  'allowsCustomHeaders': '',
-  'allowsCookies': '',
-  'country': '',
-  'faqs': true,
-  'startup-proxy': 'no',
-  'color-auto_detect': '#2124fc',
-  'color-direct': '#000',
-  'color-fixed_servers': '#fd0e1c',
-  'color-pac_script_url': '#fb9426',
-  'color-pac_script_data': '#fb9426',
-  'color-system': '#31736b'
-};
+var info = document.getElementById('status');
 
 function save() {
   chrome.storage.local.set({
@@ -44,12 +24,9 @@ function save() {
     'color-pac_script_data': document.getElementById('color-pac_script_data').value,
     'color-system': document.getElementById('color-system').value
   }, () => {
-    const status = document.getElementById('status');
-    status.textContent = 'Options saved.';
-
+    info.textContent = 'Options saved.';
     chrome.runtime.getBackgroundPage(bg => bg.chrome.proxy.settings.get({}, bg.icon));
-
-    setTimeout(() => status.textContent = '', 750);
+    setTimeout(() => info.textContent = '', 750);
   });
 }
 
@@ -59,7 +36,27 @@ var storage = prefs => new Promise(resolve => chrome.storage.managed.get(prefs, 
 
 
 function restore() {
-  storage(config).then(prefs => {
+  storage({
+    'text': false,
+    'counter': true,
+    'color': '#666666',
+    'server': 'https://gimmeproxy.com/api/getProxy',
+    'validate-mode': 'direct',
+    'anonymity': '',
+    'allowsRefererHeader': '',
+    'allowsUserAgentHeader': '',
+    'allowsCustomHeaders': '',
+    'allowsCookies': '',
+    'country': '',
+    'faqs': true,
+    'startup-proxy': 'no',
+    'color-auto_detect': '#2124fc',
+    'color-direct': '#000',
+    'color-fixed_servers': '#fd0e1c',
+    'color-pac_script_url': '#fb9426',
+    'color-pac_script_data': '#fb9426',
+    'color-system': '#31736b'
+  }).then(prefs => {
     Object.entries(prefs).forEach(([key, value]) => {
       document.getElementById(key)[typeof value === 'boolean' ? 'checked' : 'value'] = value;
     });
@@ -68,11 +65,7 @@ function restore() {
 
 document.addEventListener('DOMContentLoaded', restore);
 document.getElementById('save').addEventListener('click', save);
-document.getElementById('reset').addEventListener('click', () => {
-  Object.entries(config).forEach(([key, value]) => {
-    document.getElementById(key)[typeof value === 'boolean' ? 'checked' : 'value'] = value;
-  });
-});
+
 document.getElementById('export').addEventListener('click', () => {
   chrome.storage.local.get(null, prefs => {
     const text = JSON.stringify(prefs, null, '\t');
@@ -116,6 +109,21 @@ document.getElementById('import').addEventListener('click', () => {
   }
 });
 
+// reset
+document.getElementById('reset').addEventListener('click', e => {
+  if (e.detail === 1) {
+    info.textContent = 'Double-click to reset!';
+    window.setTimeout(() => info.textContent = '', 750);
+  }
+  else {
+    localStorage.clear();
+    chrome.storage.local.clear(() => {
+      chrome.runtime.reload();
+      window.close();
+    });
+  }
+});
+// support
 document.getElementById('support').addEventListener('click', () => chrome.tabs.create({
   url: chrome.runtime.getManifest().homepage_url + '?rd=donate'
 }));

@@ -85,47 +85,65 @@ chrome.proxy.settings.onChange.addListener(icon);
 /* badge */
 var tabs = {};
 
-chrome.tabs.query({}, ts => ts.forEach(t => tabs[t.id] = []));
-chrome.tabs.onCreated.addListener(t => tabs[t.id] = []);
-chrome.tabs.onRemoved.addListener(id => delete tabs[id]);
+var badge = tabId => chrome.browserAction.setBadgeText({
+  tabId,
+  text: tabs[tabId] && tabs[tabId].length ? String(tabs[tabId].length) : ''
+}, () => chrome.runtime.lastError);
 
-function badge(tabId) {
-  chrome.browserAction.setBadgeText({
-    tabId,
-    text: tabs[tabId] && tabs[tabId].length ? String(tabs[tabId].length) : ''
-  }, () => chrome.runtime.lastError);
-}
-chrome.webRequest.onBeforeRequest.addListener(({tabId}) => {
-  if (tabs[tabId]) {
-    tabs[tabId] = [];
+badge.install = () => {
+  chrome.tabs.query({}, ts => ts.forEach(t => tabs[t.id] = []));
+  chrome.tabs.onCreated.addListener(badge.events.onCreated);
+  chrome.tabs.onRemoved.addListener(badge.events.onRemoved);
+  chrome.webRequest.onBeforeRequest.addListener(badge.events.onBeforeRequest, {
+    urls: ['*://*/*'],
+    types: ['main_frame']
+  });
+  chrome.webRequest.onCompleted.addListener(badge.events.onCompleted, {urls: ['*://*/*']});
+  chrome.webRequest.onErrorOccurred.addListener(badge.events.onErrorOccurred, {urls: ['*://*/*']});
+};
+badge.uninstall = () => {
+  chrome.tabs.query({}, tabs => tabs.forEach(tab => chrome.browserAction.setBadgeText({
+    tabId: tab.id,
+    text: ''
+  })));
+  chrome.tabs.onCreated.removeListener(badge.events.onCreated);
+  chrome.tabs.onRemoved.removeListener(badge.events.onRemoved);
+  chrome.webRequest.onBeforeRequest.removeListener(badge.events.onBeforeRequest);
+  chrome.webRequest.onCompleted.removeListener(badge.events.onCompleted);
+  chrome.webRequest.onErrorOccurred.removeListener(badge.events.onErrorOccurred);
+};
+badge.events = {
+  onCreated: t => tabs[t.id] = [],
+  onRemoved: id => delete tabs[id],
+  onBeforeRequest: ({tabId}) => {
+    if (tabs[tabId]) {
+      tabs[tabId] = [];
+    }
+  },
+  onCompleted: d => {
+    const tabId = d.tabId;
+    if (!tabs[tabId]) {
+      return;
+    }
+    const bol = (d.statusCode < 200 || d.statusCode >= 400) && d.statusCode !== 101;
+    if (bol) {
+      tabs[tabId].push(d);
+    }
+    if (bol || d.type === 'main_frame') {
+      badge(tabId);
+    }
+  },
+  onErrorOccurred: d => {
+    const tabId = d.tabId;
+    if (tabId && tabs[tabId] && prefs.counter &&
+      d.error !== 'net::ERR_BLOCKED_BY_CLIENT' &&
+      d.error !== 'NS_ERROR_ABORT'
+    ) {
+      tabs[tabId].push(d);
+      badge(tabId);
+    }
   }
-}, {
-  urls: ['*://*/*'],
-  types: ['main_frame']
-});
-chrome.webRequest.onCompleted.addListener(d => {
-  const tabId = d.tabId;
-  if (!tabs[tabId]) {
-    return;
-  }
-  const bol = (d.statusCode < 200 || d.statusCode >= 400) && d.statusCode !== 101;
-  if (bol) {
-    tabs[tabId].push(d);
-  }
-  if (bol || d.type === 'main_frame') {
-    badge(tabId);
-  }
-}, {urls: ['*://*/*']});
-chrome.webRequest.onErrorOccurred.addListener(d => {
-  const tabId = d.tabId;
-  if (tabId && tabs[tabId] && prefs.counter &&
-    d.error !== 'net::ERR_BLOCKED_BY_CLIENT' &&
-    d.error !== 'NS_ERROR_ABORT'
-  ) {
-    tabs[tabId].push(d);
-    badge(tabId);
-  }
-}, {urls: ['*://*/*']});
+};
 
 /* messaging */
 chrome.runtime.onMessage.addListener((request, sender, response) => {
@@ -141,6 +159,10 @@ chrome.storage.local.get(null, ps => {
   chrome.browserAction.setBadgeBackgroundColor({
     color: prefs.color
   });
+  //
+  if (prefs.badge) {
+    badge.install();
+  }
   // initial proxy
   if (prefs['startup-proxy'] === 'no') {
     if (isFirefox && prefs.ffcurent) {
@@ -190,17 +212,17 @@ chrome.storage.onChanged.addListener(ps => {
       color: prefs.color
     });
   }
-  if (ps.counter && ps.counter.newValue === false) {
-    chrome.tabs.query({}, tabs => tabs.forEach(tab => chrome.browserAction.setBadgeText({
-      tabId: tab.id,
-      text: ''
-    })));
+  if (ps.counter) {
+    badge.uninstall();
+    if (ps.counter.newValue) {
+      badge.install();
+    }
   }
   if (ps.profiles || ps.text) {
     chrome.proxy.settings.get({}, icon);
   }
 });
-
+// FAQs
 {
   const {onInstalled, setUninstallURL, getManifest} = chrome.runtime;
   const {name, version} = getManifest();
