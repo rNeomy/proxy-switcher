@@ -19,7 +19,7 @@
     if (tabs.length) {
       tabId = tabs[0].id;
       chrome.runtime.getBackgroundPage((b => {
-        if (b.tabs[tabId].length) {
+        if (b.tabs[tabId] && b.tabs[tabId].length) {
           document.querySelector('#tabs>div input').classList.remove('hide');
         }
       }));

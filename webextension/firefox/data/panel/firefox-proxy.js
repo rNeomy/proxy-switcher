@@ -47,7 +47,7 @@ if (/Firefox/.test(navigator.userAgent)) {
         if (rule.scheme === 'socks5') {
           settings.socksVersion = 5;
         }
-        const url = ({host, port, scheme}) => {
+        const url = ({host, port, scheme} = {}) => {
           if (host && port) {
             return (scheme === 'https' ? 'https://' : '') + (host.trim().replace(/.*:\/\//, '') + ':' + port);
           }

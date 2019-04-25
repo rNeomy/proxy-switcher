@@ -46,6 +46,23 @@ app.compare = (a, b) => {
   ka = ka.filter(k => (Array.isArray(a[k]) ? a[k].length : true));
   kb = kb.filter(k => (Array.isArray(b[k]) ? b[k].length : true));
 
+  // remove empty objects; see https://github.com/rNeomy/proxy-switcher/issues/70
+  ka = ka.filter(k => {
+    if (typeof a[k] === 'object' && 'host' in a[k] && 'port' in a[k]) {
+      if (!a[k].host && !a[k].port) {
+        return false;
+      }
+    }
+    return true;
+  });
+  kb = kb.filter(k => {
+    if (typeof b[k] === 'object' && 'host' in b[k] && 'port' in b[k]) {
+      if (!b[k].host && !b[k].port) {
+        return false;
+      }
+    }
+    return true;
+  });
   if (ka.length !== kb.length) {
     return false;
   }
