@@ -1,6 +1,6 @@
 {
   "modeDirectMSG": {
-    "message": "Directly connected to network which bypasses system proxy"
+    "message": "Directly connect to network and bypass system proxy"
   },
   "modeAutoMSG": {
     "message": "Automatically detect the proxy settings for your network"
@@ -12,7 +12,7 @@
     "message": "Proxy is determined from a PAC script"
   },
   "modeFixedMSG": {
-    "message": "Define proxy server for each protocol (HTTP, HTTPS, FTP)"
+    "message": "Define proxy server for each protocol"
   },
   "modeDirect": {
     "message": "No Proxy - directly connected to network which bypasses system proxy"

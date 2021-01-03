@@ -18,11 +18,14 @@
   }, tabs => {
     if (tabs.length) {
       tabId = tabs[0].id;
-      chrome.runtime.getBackgroundPage((b => {
-        if (b.tabs[tabId] && b.tabs[tabId].length) {
+      chrome.runtime.sendMessage({
+        cmd: 'fails',
+        tabId
+      }, a => {
+        if (a && a.length) {
           document.querySelector('#tabs>div input').classList.remove('hide');
         }
-      }));
+      });
     }
   });
 })();

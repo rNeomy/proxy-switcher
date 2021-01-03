@@ -1,4 +1,4 @@
-/* globals app, ui, profile, _, isFirefox */
+/* globals app, isFirefox */
 'use strict';
 
 if (isFirefox === false) {
@@ -10,13 +10,14 @@ if (isFirefox === false) {
   };
 }
 
-function update(callback = function() {}) {
+function update(callback = function() {}, store = true) {
+  const _ = chrome.i18n.getMessage;
   chrome.proxy.settings.get({}, ({value}) => {
     app.emit('proxy-changed', value.mode);
     callback(value.mode, {value});
     if (value.mode === 'fixed_servers') {
-      const profile = ui.manual.profile.value;
-      if (profile) {
+      const profile = document.querySelector('manual-view').name;
+      if (profile && store) {
         chrome.storage.local.set({
           'last-manual': profile
         });
@@ -24,18 +25,6 @@ function update(callback = function() {}) {
       app.emit('update-description', _('modeFixedMSG'));
     }
     else if (value.mode === 'pac_script') {
-      if (ui.pac.parent.querySelector('[name="pac"][value="url"]').checked) {
-        chrome.storage.local.set({
-          'last-pac': ui.pac.input.value,
-          'pac-type': 'url'
-        });
-      }
-      else {
-        chrome.storage.local.set({
-          'script': ui.pac.editor.value,
-          'pac-type': 'data'
-        });
-      }
       app.emit('update-description', _('modePACMSG'));
     }
     else if (value.mode === 'direct') {
@@ -51,106 +40,128 @@ function update(callback = function() {}) {
 }
 // initialization
 update((mode, config) => {
-  // fixed_servers
-  if (mode === 'fixed_servers') {
-    profile.search(config, name => {
-      if (name) {
-        ui.manual.profile.value = name;
-      }
-      app.emit('update-manual-tab', config);
-    });
-  }
-  else {
-    app.storage('last-manual').then(prefs => {
-      const name = prefs['last-manual'];
-      if (name) {
-        ui.manual.profile.value = name;
-
-        app.storage('profile.' + name).then(prefs => {
-          const profile = prefs['profile.' + name];
-          app.emit('update-manual-tab', profile);
+  Promise.all([
+    () => { // fixed_servers
+      if (mode === 'fixed_servers') {
+        const m = document.querySelector('manual-view');
+        return m.search(config).then(name => {
+          m.update(config.value, name);
+          if (!name) {
+            m.random();
+          }
+          m.profiles();
         });
       }
-    });
-  }
-  // pac_script
-  if (mode === 'pac_script') {
-    if (config.value.pacScript.url || isFirefox) {
-      ui.pac.parent.querySelector('[name="pac"][value="url"]').checked = true;
-      ui.pac.input.dataset.value = ui.pac.input.value = config.value.pacScript.url;
-      ui.pac.input.dispatchEvent(new Event('keyup'));
+      else {
+        return app.storage('last-manual').then(prefs => {
+          const name = prefs['last-manual'];
+          const m = document.querySelector('manual-view');
+          if (name) {
+            return app.storage('profile.' + name).then(prefs => {
+              const profile = prefs['profile.' + name];
+              if (profile) {
+                m.update(profile.value, name);
+              }
+              else {
+                m.random();
+              }
+              m.profiles();
+            });
+          }
+          else {
+            m.random();
+            m.profiles();
+          }
+        });
+      }
+    },
+    () => { // pac_script
+      const pac = document.querySelector('pac-view');
+      if (mode === 'pac_script') {
+        if (config.value.pacScript.url || isFirefox) {
+          pac.set('href', config.value.pacScript.url, true);
+          return app.storage({
+            'script': false
+          }).then(prefs => {
+            if (prefs.script) {
+              pac.set('script', prefs.script, false);
+            }
+          });
+        }
+        else if (config.value.pacScript.data) {
+          pac.set('script', config.value.pacScript.data, true);
+          return app.storage({
+            'last-pac': false
+          }).then(prefs => {
+            if (prefs['last-pac']) {
+              pac.set('href', prefs['last-pac'], false);
+            }
+          });
+        }
+      }
+      else {
+        return app.storage({
+          'script': false,
+          'last-pac': false,
+          'pac-type': 'url'
+        }).then(prefs => {
+          if (prefs['last-pac']) {
+            pac.set('href', prefs['last-pac'], prefs['pac-type'] === 'url');
+          }
+          if (prefs.script) {
+            pac.set('script', prefs.script, prefs['pac-type'] === 'data');
+          }
+        });
+      }
     }
-    else if (config.value.pacScript.data) {
-      ui.pac.parent.querySelector('[name="pac"][value="data"]').checked = true;
-      ui.pac.editor.value = config.value.pacScript.data;
-    }
-  }
-  app.storage({
-    'last-pac': false,
-    'script': false,
-    'pac-type': 'data'
-  }).then(prefs => {
-    if (isFirefox) {
-      prefs['pac-type'] = 'url';
-    }
-    if (prefs['last-pac'] && (mode !== 'pac_script' || !config.value.pacScript.url)) {
-      ui.pac.input.dataset.value = ui.pac.input.value = prefs['last-pac'];
-      ui.pac.input.dispatchEvent(new Event('keyup'));
-    }
-    if (prefs.script && (mode !== 'pac_script' || !config.value.pacScript.data)) {
-      ui.pac.editor.value = prefs.script;
-      ui.pac.editor.dispatchEvent(new Event('keyup'));
-    }
-    if (mode !== 'pac_script') {
-      ui.pac.parent.querySelector('[name="pac"][value="' + prefs['pac-type'] + '"]').checked = true;
-    }
-  });
-});
+  ].map(c => c())).then(() => document.body.dataset.ready = true);
+}, false);
 
-var proxy = {};
+const proxy = {};
 proxy.manual = () => {
-  const scheme = ui.manual.type.querySelector(':checked').value;
+  const m = document.querySelector('manual-view');
+  const scheme = m.scheme;
   const value = {
     mode: 'fixed_servers',
     rules: {}
   };
-  if (ui.manual.http.host.value && ui.manual.http.port.value) {
+  const values = m.values;
+  if (values.http.host && values.http.port) {
     value.rules.proxyForHttp = {
-      host: ui.manual.http.host.value,
-      port: Number(ui.manual.http.port.value),
+      host: values.http.host,
+      port: Number(values.http.port),
       scheme
     };
   }
-  if (ui.manual.https.host.value && ui.manual.https.port.value) {
+  if (values.ssl.host && values.ssl.port) {
     value.rules.proxyForHttps = {
-      host: ui.manual.https.host.value,
-      port: Number(ui.manual.https.port.value),
+      host: values.ssl.host,
+      port: Number(values.ssl.port),
       scheme
     };
   }
-  if (ui.manual.ftp.host.value && ui.manual.ftp.port.value) {
+  if (values.ftp.host && values.ftp.port) {
     value.rules.proxyForFtp = {
-      host: ui.manual.ftp.host.value,
-      port: Number(ui.manual.ftp.port.value),
+      host: values.ftp.host,
+      port: Number(values.ftp.port),
       scheme
     };
   }
-  if (ui.manual.others.host.value && ui.manual.others.port.value) {
+  if (values.fallback.host && values.fallback.port) {
     value.rules.fallbackProxy = {
-      host: ui.manual.others.host.value,
-      port: Number(ui.manual.others.port.value),
+      host: values.fallback.host,
+      port: Number(values.fallback.port),
       scheme
     };
   }
-
-  const bypassList = ui.manual.bypassList.value.split(',').map(s => s.trim())
+  const bypassList = m.bypassList.split(',').map(s => s.trim())
     .filter((s, i, l) => s && l.indexOf(s) === i);
   if (bypassList.length) {
     value.rules.bypassList = bypassList;
   }
 
-  value.remoteDNS = ui.manual.remoteDNS.checked;
-  value.noPrompt = ui.manual.noPrompt.checked;
+  value.remoteDNS = m.remoteDNS;
+  value.noPrompt = m.noPrompt;
 
   return {value};
 };
@@ -161,12 +172,12 @@ proxy.pac = () => {
       mandatory: true
     }
   };
-  const mode = ui.pac.parent.querySelector(':checked');
-  if (mode && mode.value === 'url') {
-    value.pacScript.url = ui.pac.input.value;
+  const mode = document.querySelector('pac-view').mode;
+  if (mode === 'href') {
+    value.pacScript.url = document.querySelector('pac-view').get('href');
   }
-  else if (mode && mode.value === 'data') {
-    value.pacScript.data = ui.pac.editor.value;
+  else if (mode === 'script') {
+    value.pacScript.data = document.querySelector('pac-view').get('script');
   }
   return {value};
 };
@@ -183,12 +194,21 @@ app.on('change-proxy', mode => {
   }
   // set proxy
   try {
-    chrome.proxy.settings.set(config, () => update(m => {
-      if (m !== mode) {
-        app.emit('notify', 'Cannot set this proxy type!');
+    chrome.proxy.settings.set(config, () => {
+      const lastError = chrome.runtime.lastError;
+      if (lastError) {
+        app.emit('notify', lastError.message);
         app.emit('proxy-changed', mode);
       }
-    }));
+      else {
+        update(m => {
+          if (m !== mode) {
+            app.emit('notify', 'Cannot set this proxy type!');
+            app.emit('proxy-changed', mode);
+          }
+        });
+      }
+    });
   }
   catch (e) {
     app.emit('notify', e.message || e);

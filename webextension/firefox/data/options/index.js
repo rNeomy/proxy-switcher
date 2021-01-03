@@ -1,6 +1,6 @@
 'use strict';
 
-var info = document.getElementById('status');
+const toast = document.getElementById('toast');
 
 function save() {
   const perform = () => chrome.storage.local.set({
@@ -24,9 +24,9 @@ function save() {
     'color-pac_script_data': document.getElementById('color-pac_script_data').value,
     'color-system': document.getElementById('color-system').value
   }, () => {
-    info.textContent = 'Options saved.';
+    toast.textContent = 'Options saved.';
     chrome.runtime.getBackgroundPage(bg => bg.chrome.proxy.settings.get({}, bg.icon));
-    setTimeout(() => info.textContent = '', 750);
+    setTimeout(() => toast.textContent = '', 750);
   });
   if (document.getElementById('counter').checked) {
     chrome.permissions.request({
@@ -47,7 +47,7 @@ function save() {
   }
 }
 
-var storage = prefs => new Promise(resolve => chrome.storage.managed.get(prefs, ps => {
+const storage = prefs => new Promise(resolve => chrome.storage.managed.get(prefs, ps => {
   chrome.storage.local.get(chrome.runtime.lastError ? prefs : ps || prefs, resolve);
 }));
 
@@ -57,7 +57,7 @@ function restore() {
     'text': false,
     'counter': false,
     'color': '#666666',
-    'server': 'https://gimmeproxy.com/api/getProxy',
+    'server': 'https://api.getproxylist.com/proxy',
     'validate-mode': 'direct',
     'anonymity': '',
     'allowsRefererHeader': '',
@@ -129,8 +129,8 @@ document.getElementById('import').addEventListener('click', () => {
 // reset
 document.getElementById('reset').addEventListener('click', e => {
   if (e.detail === 1) {
-    info.textContent = 'Double-click to reset!';
-    window.setTimeout(() => info.textContent = '', 750);
+    toast.textContent = 'Double-click to reset!';
+    window.setTimeout(() => toast.textContent = '', 750);
   }
   else {
     localStorage.clear();

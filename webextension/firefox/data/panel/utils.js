@@ -1,8 +1,7 @@
 'use strict';
 
-var isFirefox = /Firefox/.test(navigator.userAgent);
-var app = {};
-var _ = chrome.i18n.getMessage;
+const isFirefox = /Firefox/.test(navigator.userAgent);
+const app = {};
 
 app.storage = prefs => new Promise(resolve => chrome.storage.local.get(prefs, resolve));
 

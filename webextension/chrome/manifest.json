@@ -1,9 +1,7 @@
 {
   "name": "Proxy Switcher and Manager",
-  "short_name": "proxy-switcher",
-  "description": "Manage and switch between multiple proxies quickly and easily through profiles",
-  "author": "Richard Neomy",
-  "version": "0.4.1",
+  "description": "Manage and switch between multiple proxy types (SOCKS, PAC, and Direct) with profile support",
+  "version": "0.5.0",
   "manifest_version": 2,
   "default_locale": "en",
   "permissions": [
@@ -19,10 +17,6 @@
     "managed_schema": "schema.json"
   },
   "browser_action": {
-    "default_icon": {
-      "16": "data/icons/16.png",
-      "32": "data/icons/32.png"
-    },
     "default_popup": "data/panel/index.html"
   },
   "background": {
@@ -31,11 +25,15 @@
       "common.js"
     ]
   },
-  "homepage_url": "http://add0n.com/proxy-switcher.html",
+  "homepage_url": "https://add0n.com/proxy-switcher.html",
   "icons": {
     "16": "data/icons/16.png",
+    "24": "data/icons/24.png",
+    "32": "data/icons/32.png",
     "48": "data/icons/48.png",
-    "128": "data/icons/128.png"
+    "64": "data/icons/64.png",
+    "128": "data/icons/128.png",
+    "256": "data/icons/256.png"
   },
   "options_ui": {
     "page": "data/options/index.html",
