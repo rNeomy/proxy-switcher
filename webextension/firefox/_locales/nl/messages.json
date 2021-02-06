@@ -1,0 +1,35 @@
+{
+  "modeDirectMSG": {
+    "message": "Direct verbinding maken met netwerk en systeemproxy negeren"
+  },
+  "modeAutoMSG": {
+    "message": "Proxy-instellingen van netwerk automatisch detecteren"
+  },
+  "modeSystemMSG": {
+    "message": "Systeemproxy gebruiken"
+  },
+  "modePACMSG": {
+    "message": "De proxy wordt bepaald op basis van een pac-script"
+  },
+  "modeFixedMSG": {
+    "message": "Proxyserver per protocol bepalen"
+  },
+  "modeDirect": {
+    "message": "Geen proxy - direct verbinding maken met netwerk en systeemproxy negeren"
+  },
+  "modeAuto": {
+    "message": "Automatisch - automatisch de proxy-instellingen detecteren"
+  },
+  "modePACD": {
+    "message": "PAC-script - ingebouwde scriptmodus"
+  },
+  "modePACU": {
+    "message": "PAC-script - "
+  },
+  "modeFixed": {
+    "message": "Handmatig - proxyserver per schema (http, https en ftp) zoals opgegeven in de instellingen"
+  },
+  "modeSystem": {
+    "message": "Systeem - systeemproxy gebruiken"
+  }
+}
