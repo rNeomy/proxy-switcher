@@ -78,7 +78,7 @@ class PacView extends HTMLElement {
         }
         #editor {
           background-color: #f0f0f0;
-          overflow: hidden;
+          overflow: auto;
           height: 300px;
         }
         .disabled {
