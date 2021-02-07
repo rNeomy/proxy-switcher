@@ -1,7 +1,7 @@
 {
   "name": "Proxy Switcher and Manager",
   "description": "Manage and switch between multiple proxy types (SOCKS, PAC, and Direct) with profile support",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "manifest_version": 2,
   "default_locale": "en",
   "permissions": [
