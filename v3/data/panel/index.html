@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <div id="toolbar">
+      <h1>Proxy Switcher</h1><span></span>
+    </div>
+    <ul id="tabs">
+      <label title="Select with Ctrl + 1 or Command + 1">
+        <input type="radio" name="tabs">
+        <li data-mode="direct" class="no-proxy" data-open="others">Direct</li>
+      </label>
+      <label title="Select with Ctrl + 2 or Command + 2">
+        <input type="radio" name="tabs">
+        <li data-mode="auto_detect" class="auto-proxy" data-open="others">Auto Detect</li>
+      </label>
+      <label title="Select with Ctrl + 3 or Command + 3">
+        <input type="radio" name="tabs">
+        <li data-mode="system" class="system-proxy" data-open="others">System Proxy</li>
+      </label>
+      <label title="Select with Ctrl + 4 or Command + 4">
+        <input type="radio" name="tabs">
+        <li data-mode="fixed_servers" class="manual-proxy" data-open="manual">Manual Proxy</li>
+      </label>
+      <label title="Select with Ctrl + 5 or Command + 5">
+        <input type="radio" name="tabs">
+        <li data-mode="pac_script" class="pac-proxy" data-open="pac">PAC Script</li>
+      </label>
+      <div>
+        <input type="button" value="Error Log" data-cmd="open-failed-resources" class="hide">
+      </div>
+    </ul>
+    <manual-view class="body hide" id="manual"></manual-view>
+    <pac-view class="body hide" id="pac"></pac-view>
+
+    <div class="body hide" id="others">Nothing to Configure!</div>
+    <div id="tools">
+      <a href="https://webbrowsertools.com/ip-address/" target="_blank">Check IP</a> &#x25cf;
+      <a href="https://add0n.com/proxy-switcher.html" target="_blank">FAQs Page</a> &#x25cf;
+      <a href="#" id="options">Options Page</a>
+    </div>
+    <div id=notify></div>
+    <div id="private" class="hide">Enable the extension on private mode; "about:addons" -> Proxy Switcher and Manager -> Run in Private Windows</div>
+
+    <script type="module" src="components/manual-view.js"></script>
+    <script type="module" src="components/pac-view.js"></script>
+    <script src="utils.js"></script>
+    <script src="ui.js"></script>
+    <script defer src="proxy.js"></script>
+    <script src="toolbar.js"></script>
+  </body>
+</html>

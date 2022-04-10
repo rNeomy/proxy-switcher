@@ -1,0 +1,38 @@
+{
+  "description": {
+    "message": "Manage and switch between multiple proxy types (SOCKS, PAC, and Direct) with profile support"
+  },
+  "modeDirectMSG": {
+    "message": "Directly connect to network and bypass system proxy"
+  },
+  "modeAutoMSG": {
+    "message": "Automatically detect the proxy settings for your network"
+  },
+  "modeSystemMSG": {
+    "message": "Use system-wide proxy"
+  },
+  "modePACMSG": {
+    "message": "Proxy is determined from a PAC script"
+  },
+  "modeFixedMSG": {
+    "message": "Define proxy server for each protocol"
+  },
+  "modeDirect": {
+    "message": "No Proxy - directly connected to network which bypasses system proxy"
+  },
+  "modeAuto": {
+    "message": "Auto-Detect - automatically detect the proxy settings for your network"
+  },
+  "modePACD": {
+    "message": "PAC Script - inline-script mode"
+  },
+  "modePACU": {
+    "message": "PAC Script - "
+  },
+  "modeFixed": {
+    "message": "Manual Proxy - proxy server for each scheme (HTTP, HTTPS, and FTP) is defined in the settings page"
+  },
+  "modeSystem": {
+    "message": "System - use system-wide proxy"
+  }
+}

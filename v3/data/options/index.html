@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Proxy Switcher and Manager :: Options</title>
+    <link rel="stylesheet" type="text/css" href="index.css">
+  </head>
+  <body>
+    <table>
+      <thead>
+        <tr>
+          <th colspan="2">Badge</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="notav">
+          <td><label for="counter">Display badge counter for errors (webRequest permission needed)</label><sup>1</sup></td>
+          <td><input type="checkbox" id="counter"></td>
+        </tr>
+        <tr>
+          <td><label for="color">Badge color for the counter</label></td>
+          <td><input type="color" id="color"></td>
+        </tr>
+        <tr>
+          <td><label for="text">Display first profile letter on the "Manual Proxy" mode</label></td>
+          <td><input type="checkbox" id="text"></td>
+        </tr>
+      </tbody>
+      <thead>
+        <tr>
+          <th colspan="2">Color Codes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Direct</td>
+          <td><input type="color" id="color-direct"></td>
+        </tr>
+        <tr>
+          <td>Auto Detect</td>
+          <td><input type="color" id="color-auto_detect"></td>
+        </tr>
+        <tr>
+          <td>System Proxy</td>
+          <td><input type="color" id="color-system"></td>
+        </tr>
+        <tr>
+          <td>Manual Proxy</td>
+          <td><input type="color" id="color-fixed_servers"></td>
+        </tr>
+        <tr>
+          <td>PAC Script (URL)</td>
+          <td><input type="color" id="color-pac_script_url"></td>
+        </tr>
+        <tr>
+          <td>PAC Script (Date)</td>
+          <td><input type="color" id="color-pac_script_data"></td>
+        </tr>
+      </tbody>
+      <thead>
+        <tr>
+          <th colspan="2">Find a Proxy Server</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>While Validating Switch to:</td>
+          <td><select id="validate-mode">
+            <option value="direct">Direct</option>
+            <option value="auto_detect">Auto Detect</option>
+            <option value="system">System Proxy</option>
+            <option value="fixed_servers">Manual Proxy</option>
+          </select></td>
+        </tr>
+      </tbody>
+      <thead>
+        <tr>
+          <th colspan="2">Misc</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Startup Proxy:</td>
+          <td><select id="startup-proxy">
+            <option value="no">Do not alter</option>
+            <option value="direct">Direct</option>
+            <option value="auto_detect">Auto Detect</option>
+            <option value="system">System Proxy</option>
+          </select></td>
+        </tr>
+        <tr>
+          <td><label for="faqs">Open FAQs page on updates</label></td>
+          <td><input type="checkbox" id="faqs"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="display: flex; align-items: flex-end;">
+
+    </p>
+    <p style="display: flex; align-items: center;">
+      <button id="import">Import <sup>2</sup></button>
+      <button id="export">Export</button>
+      <span style="flex: 1;"></span>
+      <span id="toast"></span>&nbsp;<button id="reset">Factory Reset</button>
+      <button id="save">Save Options</button>
+    </p>
+    <hr>
+    <p>
+      1: Display resource errors of the current page in the badge area
+      <br>
+      2: Importing will overwrite the current user-defined profiles (do an export before importing). Note that Firefox and Chrome backup files are incompatible.
+    </p>
+    <div>
+      <button id="support">Support Development</button>
+    </div>
+    <script src="index.js"></script>
+  </body>
+</html>
