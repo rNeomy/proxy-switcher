@@ -22,6 +22,7 @@
         cmd: 'fails',
         tabId
       }, a => {
+        chrome.runtime.lastError;
         if (a && a.length) {
           document.querySelector('#tabs>div input').classList.remove('hide');
         }
