@@ -76,7 +76,7 @@ const icon = (() => {
     chrome.action.setTitle({title}, () => chrome.runtime.lastError);
   });
 })();
-
+chrome.proxy.settings.get({}, icon);
 chrome.proxy.settings.onChange.addListener(icon);
 
 // init

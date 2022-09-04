@@ -1,16 +1,22 @@
 body {
-  font-size: 14px;
+  font-size: 13px;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
   background-color: #fff;
   color: #4d5156;
   width: min(100% - 2rem, 70rem);
   margin-inline: auto;
 }
+h1 {
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 10px;
+  font-size: 100%;
+}
 select,
 button,
 input[type=submit],
 input[type=button] {
-  height: 24px;
+  padding: 5px;
   color: #444;
   background-image: linear-gradient(rgb(237, 237, 237), rgb(237, 237, 237) 38%, rgb(222, 222, 222));
   box-shadow: rgba(0, 0, 0, 0.08) 0 1px 0, rgba(255, 255, 255, 0.75) 0 1px 2px inset;
@@ -45,14 +51,6 @@ a,
 a:visited {
   color: #07c;
 }
-
-table {
-  width: 100%;
-}
-th {
-  background-color: rgba(0, 0, 0, 0.05);
-  height: 24px;
-}
 hr {
   border: none;
   border-top: dashed 1px #ccc;
@@ -66,11 +64,24 @@ td:last-child {
   text-align: right;
   white-space: nowrap;
 }
-button:not(:first-child) {
-  margin-left: 6px;
+
+p {
+  display: flex;
+  gap: 5px;
+  white-space: nowrap;
+  flex-flow: wrap;
+  align-items: center;
 }
 
 .notav {
   opacity: 0.5;
   pointer-events: none;
+}
+.two {
+  display: grid;
+  grid-template-columns: 1fr min-content;
+  grid-gap: 10px;
+}
+.two :nth-child(even) {
+  justify-self: end;
 }

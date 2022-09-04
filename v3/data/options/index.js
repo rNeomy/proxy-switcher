@@ -2,7 +2,11 @@
 
 const toast = document.getElementById('toast');
 
-function save() {
+const storage = prefs => new Promise(resolve => chrome.storage.managed.get(prefs, ps => {
+  chrome.storage.local.get(chrome.runtime.lastError ? prefs : ps || prefs, resolve);
+}));
+
+document.getElementById('save').addEventListener('click', () => {
   const perform = () => chrome.storage.local.set({
     'text': document.getElementById('text').checked,
     'counter': document.getElementById('counter').checked,
@@ -22,14 +26,9 @@ function save() {
     setTimeout(() => toast.textContent = '', 750);
   });
   perform();
-}
+});
 
-const storage = prefs => new Promise(resolve => chrome.storage.managed.get(prefs, ps => {
-  chrome.storage.local.get(chrome.runtime.lastError ? prefs : ps || prefs, resolve);
-}));
-
-
-function restore() {
+document.addEventListener('DOMContentLoaded', () => {
   storage({
     'text': false,
     'counter': false,
@@ -48,11 +47,9 @@ function restore() {
       document.getElementById(key)[typeof value === 'boolean' ? 'checked' : 'value'] = value;
     });
   });
-}
+});
 
-document.addEventListener('DOMContentLoaded', restore);
-document.getElementById('save').addEventListener('click', save);
-
+// export
 document.getElementById('export').addEventListener('click', () => {
   chrome.storage.local.get(null, prefs => {
     const text = JSON.stringify(prefs, null, '\t');
@@ -66,6 +63,8 @@ document.getElementById('export').addEventListener('click', () => {
     setTimeout(() => URL.revokeObjectURL(objectURL));
   });
 });
+
+// import
 document.getElementById('import').addEventListener('click', () => {
   const fileInput = document.createElement('input');
   fileInput.style.display = 'none';
@@ -110,7 +109,15 @@ document.getElementById('reset').addEventListener('click', e => {
     });
   }
 });
+
 // support
 document.getElementById('support').addEventListener('click', () => chrome.tabs.create({
   url: chrome.runtime.getManifest().homepage_url + '?rd=donate'
 }));
+
+// links
+for (const a of document.querySelectorAll('[data-href]')) {
+  if (a.hasAttribute('href') === false) {
+    a.href = chrome.runtime.getManifest().homepage_url + '#' + a.dataset.href;
+  }
+}
