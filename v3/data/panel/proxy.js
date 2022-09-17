@@ -7,6 +7,8 @@ chrome.proxy.settings.set = new Proxy(chrome.proxy.settings.set, {
     delete config.value.remoteDNS;
     delete config.value.noPrompt;
 
+    console.log(config);
+
     Reflect.apply(target, self, args);
   }
 });
@@ -15,6 +17,9 @@ function update(callback = function() {}, store = true) {
   const _ = chrome.i18n.getMessage;
   chrome.proxy.settings.get({}, ({value}) => {
     app.emit('proxy-changed', value.mode);
+
+    console.log(value);
+
     callback(value.mode, {value});
     if (value.mode === 'fixed_servers') {
       const profile = document.querySelector('manual-view').name;
@@ -127,6 +132,7 @@ proxy.manual = () => {
     rules: {}
   };
   const values = m.values;
+  console.log(values);
   if (values.http.host && values.http.port) {
     value.rules.proxyForHttp = {
       host: values.http.host,
