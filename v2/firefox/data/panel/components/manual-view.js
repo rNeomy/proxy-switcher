@@ -394,19 +394,19 @@ class ManualView extends HTMLElement {
   get values() {
     return {
       http: {
-        host: this.shadowRoot.getElementById('http-host').value,
+        host: this.shadowRoot.getElementById('http-host').value.trim(),
         port: this.shadowRoot.getElementById('http-port').value
       },
       ssl: {
-        host: this.shadowRoot.getElementById('ssl-host').value,
+        host: this.shadowRoot.getElementById('ssl-host').value.trim(),
         port: this.shadowRoot.getElementById('ssl-port').value
       },
       ftp: {
-        host: this.shadowRoot.getElementById('ftp-host').value,
+        host: this.shadowRoot.getElementById('ftp-host').value.trim(),
         port: this.shadowRoot.getElementById('ftp-port').value
       },
       fallback: {
-        host: this.shadowRoot.getElementById('fallback-host').value,
+        host: this.shadowRoot.getElementById('fallback-host').value.trim(),
         port: this.shadowRoot.getElementById('fallback-port').value
       }
     };

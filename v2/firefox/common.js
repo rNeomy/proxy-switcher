@@ -90,7 +90,6 @@ const badge = tabId => chrome.browserAction.setBadgeText({
 }, () => chrome.runtime.lastError);
 
 badge.install = () => {
-  console.log(9);
   chrome.tabs.query({}, ts => ts.forEach(t => tabs[t.id] = []));
   chrome.tabs.onCreated.addListener(badge.events.onCreated);
   chrome.tabs.onRemoved.addListener(badge.events.onRemoved);
@@ -162,7 +161,6 @@ chrome.storage.local.get(null, ps => {
     color: prefs.color
   });
   //
-  console.log(prefs);
   if (prefs.counter) {
     badge.install();
   }
