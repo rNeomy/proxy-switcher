@@ -1,14 +1,18 @@
 /* global app */
 
-self.importScripts('data/panel/utils.js');
-// self.importScripts('badge.js');
+if (typeof importScripts !== 'undefined') {
+  self.importScripts('/data/panel/utils.js');
+  self.importScripts('badge.js');
+}
 
 const _ = chrome.i18n.getMessage;
 
 /* icon color */
 const icon = (() => {
   const canvas = new OffscreenCanvas(48, 48);
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', {
+    willReadFrequently: true
+  });
   ctx.fillStyle = '#777';
   ctx.fill(
     new Path2D('M28.256,39.289v-1.26h-8.512v1.26c0,1.393-1.129,2.521-2.522,2.521h-2.079v2.523h17.713v-2.523h-2.078 C29.385,41.811,28.256,40.682,28.256,39.289z')
@@ -30,7 +34,8 @@ const icon = (() => {
       ...prefs
     };
 
-    let mode = config.value.mode;
+    let mode = config.value.mode || config.value.proxyType;
+
     if (mode === 'pac_script') {
       mode = config.value.pacScript && config.value.pacScript.url ? 'pac_script_url' : 'pac_script_data';
     }
@@ -142,28 +147,31 @@ chrome.storage.onChanged.addListener(ps => {
 
 /* FAQs & Feedback */
 {
-  const {management, runtime: {onInstalled, setUninstallURL, getManifest}, storage, tabs} = chrome;
+  chrome.management = chrome.management || {
+    getSelf(c) {
+      c({installType: 'normal'});
+    }
+  };
   if (navigator.webdriver !== true) {
-    const page = getManifest().homepage_url;
-    const {name, version} = getManifest();
-    onInstalled.addListener(({reason, previousVersion}) => {
-      management.getSelf(({installType}) => installType === 'normal' && storage.local.get({
+    const {homepage_url: page, name, version} = chrome.runtime.getManifest();
+    chrome.runtime.onInstalled.addListener(({reason, previousVersion}) => {
+      chrome.management.getSelf(({installType}) => installType === 'normal' && chrome.storage.local.get({
         'faqs': true,
         'last-update': 0
       }, prefs => {
         if (reason === 'install' || (prefs.faqs && reason === 'update')) {
           const doUpdate = (Date.now() - prefs['last-update']) / 1000 / 60 / 60 / 24 > 45;
           if (doUpdate && previousVersion !== version) {
-            tabs.query({active: true, currentWindow: true}, tbs => tabs.create({
+            chrome.tabs.query({active: true, lastFocusedWindow: true}, tbs => chrome.tabs.create({
               url: page + '?version=' + version + (previousVersion ? '&p=' + previousVersion : '') + '&type=' + reason,
               active: reason === 'install',
               ...(tbs && tbs.length && {index: tbs[0].index + 1})
             }));
-            storage.local.set({'last-update': Date.now()});
+            chrome.storage.local.set({'last-update': Date.now()});
           }
         }
       }));
     });
-    setUninstallURL(page + '?rd=feedback&name=' + encodeURIComponent(name) + '&version=' + version);
+    chrome.runtime.setUninstallURL(page + '?rd=feedback&name=' + encodeURIComponent(name) + '&version=' + version);
   }
 }
