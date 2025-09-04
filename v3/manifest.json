@@ -1,7 +1,7 @@
 {
   "name": "Proxy Switcher and Manager",
   "description": "__MSG_description__",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "manifest_version": 3,
   "default_locale": "en",
   "permissions": [
@@ -16,12 +16,16 @@
     "default_popup": "data/panel/index.html"
   },
   "background": {
-    "service_worker": "worker.js"
+    "service_worker": "worker.js",
+    "scripts": [
+      "data/panel/utils.js",
+      "badge.js",
+      "worker.js"
+    ]
   },
-  "homepage_url": "https://add0n.com/proxy-switcher.html",
+  "homepage_url": "https://webextension.org/listing/proxy-switcher.html",
   "icons": {
     "16": "data/icons/16.png",
-    "24": "data/icons/24.png",
     "32": "data/icons/32.png",
     "48": "data/icons/48.png",
     "64": "data/icons/64.png",
@@ -33,6 +37,8 @@
     "open_in_tab": true
   },
   "commands": {
-    "_execute_action": {}
+    "_execute_action": {
+      "description": "Execute Action"
+    }
   }
 }
