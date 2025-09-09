@@ -1,7 +1,7 @@
 {
   "name": "Proxy Switcher and Manager",
   "description": "__MSG_description__",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "manifest_version": 3,
   "default_locale": "en",
   "permissions": [
@@ -16,12 +16,7 @@
     "default_popup": "data/panel/index.html"
   },
   "background": {
-    "service_worker": "worker.js",
-    "scripts": [
-      "data/panel/utils.js",
-      "badge.js",
-      "worker.js"
-    ]
+    "service_worker": "worker.js"
   },
   "homepage_url": "https://webextension.org/listing/proxy-switcher.html",
   "icons": {

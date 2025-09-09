@@ -139,7 +139,7 @@ class ManualView extends HTMLElement {
           <input type="checkbox" id="no-prompt" data-value="false">
           <label for="no-prompt" title="Do not prompt for authentication if password is saved">No Prompt</label>
         </div>
-        <td>Direct:</td>
+        <span>Direct:</span>
         <input type="text" id="bypass-list" placeholder="comma separated list of IPs" data-value="localhost, 127.0.0.1, 192.168.8.0" value="localhost, 127.0.0.1, 192.168.8.0">
         <span>Search</span>
         <span id="search-log">Find a free proxy server</span>
