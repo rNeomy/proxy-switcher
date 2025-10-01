@@ -121,20 +121,16 @@ const startup = async () => {
     color: prefs.color
   });
   // initial proxy
-  if (prefs['startup-proxy'] === 'no') {
-    chrome.proxy.settings.get({}, config => {
-      self.icon(config, 'startup/1');
-    });
-  }
-  else {
-    chrome.proxy.settings.set({
+  if (prefs['startup-proxy'] !== 'no') {
+    await chrome.proxy.settings.set({
       value: {
         mode: prefs['startup-proxy']
       }
-    }, config => {
-      self.icon(config, 'startup/2');
     });
   }
+  chrome.proxy.settings.get({}, config => {
+    self.icon(config, 'startup/1');
+  });
 };
 chrome.runtime.onInstalled.addListener(startup);
 chrome.runtime.onStartup.addListener(startup);
