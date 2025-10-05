@@ -1,4 +1,7 @@
 {
+  "description": {
+    "message": "Beheer en wissel tussen meerdere proxytypen (SOCKS, PAC en Direct) met profielondersteuning."
+  },
   "modeDirectMSG": {
     "message": "Direct verbinding maken met netwerk en systeemproxy negeren"
   },

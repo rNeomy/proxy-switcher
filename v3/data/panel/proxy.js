@@ -230,3 +230,7 @@ document.addEventListener('click', ({target}) => {
     app.emit('change-proxy', 'fixed_servers');
   }
 });
+
+chrome.runtime.sendMessage({
+  method: 'update-icon'
+});

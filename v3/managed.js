@@ -19,9 +19,11 @@
           });
           if (prefs['import-version'] < mps['import-version']) {
             const json = JSON.parse(mps['import-json']);
-            await chrome.storage.local.set(Object.assign({
+            await chrome.storage.local.set({
               'import-version': mps['import-version']
-            }, json));
+            });
+            await chrome.storage.local.set(json);
+
             chrome.runtime.reload();
           }
           else {

@@ -9,25 +9,6 @@ const _ = chrome.i18n.getMessage;
 
 /* icon color */
 {
-  const canvas = new OffscreenCanvas(48, 48);
-  const ctx = canvas.getContext('2d', {
-    willReadFrequently: true
-  });
-  ctx.fillStyle = '#777';
-  ctx.fill(
-    new Path2D(
-      'M28.256,39.289v-1.26h-8.512v1.26c0,1.393-1.129,2.521-2.522,2.521h-2.079v2.523h17.713v-2.523h-2.078 ' +
-      'C29.385,41.811,28.256,40.682,28.256,39.289z'
-    )
-  );
-  ctx.fill(
-    new Path2D(
-      'M45.396,3.667h-0.273H2.859H2.605H0.021V6.25v0.648v26.895v0.391v2.584h2.583h0.589h40.982h1.22h2.583 ' +
-      'v-2.584v-0.883V6.846V6.25V3.667H45.396z M24,35.23c-0.696,0-1.261-0.564-1.261-1.262c0-0.695, ' +
-      '0.565-1.26,1.261-1.26 c0.697,0,1.261,0.564,1.261,1.26C25.261,34.666,24.697,35.23,24,35.23z ' +
-      'M45.435,6.846v0.919v23.644H2.565V7.765V6.898V6.009h0.293    h1.359h39.485h1.419h0.312V6.846z'
-    )
-  );
   let busy = false;
   self.icon = async (config, reason) => {
     if (busy) {
@@ -55,6 +36,23 @@ const _ = chrome.i18n.getMessage;
         mode = config.value.pacScript && config.value.pacScript.url ? 'pac_script_url' : 'pac_script_data';
       }
 
+      const canvas = new OffscreenCanvas(48, 48);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#777';
+      ctx.fill(
+        new Path2D(
+          'M28.256,39.289v-1.26h-8.512v1.26c0,1.393-1.129,2.521-2.522,2.521h-2.079v2.523h17.713v-2.523h-2.078 ' +
+          'C29.385,41.811,28.256,40.682,28.256,39.289z'
+        )
+      );
+      ctx.fill(
+        new Path2D(
+          'M45.396,3.667h-0.273H2.859H2.605H0.021V6.25v0.648v26.895v0.391v2.584h2.583h0.589h40.982h1.22h2.583 ' +
+          'v-2.584v-0.883V6.846V6.25V3.667H45.396z M24,35.23c-0.696,0-1.261-0.564-1.261-1.262c0-0.695, ' +
+          '0.565-1.26,1.261-1.26 c0.697,0,1.261,0.564,1.261,1.26C25.261,34.666,24.697,35.23,24,35.23z ' +
+          'M45.435,6.846v0.919v23.644H2.565V7.765V6.898V6.009h0.293    h1.359h39.485h1.419h0.312V6.846z'
+        )
+      );
       ctx.fillStyle = prefs['color-' + mode];
       ctx.fillRect(5.04, 8.652, 37.83, 20.176);
 
@@ -134,6 +132,12 @@ const startup = async () => {
 };
 chrome.runtime.onInstalled.addListener(startup);
 chrome.runtime.onStartup.addListener(startup);
+
+chrome.runtime.onMessage.addListener(request => {
+  if (request.method === 'update-icon') {
+    chrome.proxy.settings.get({}, config => self.icon(config, 'popup-open'));
+  }
+});
 
 // pref changes
 chrome.storage.onChanged.addListener(ps => {

@@ -2,7 +2,7 @@
 
 const app = {};
 
-app.storage = prefs => new Promise(resolve => chrome.storage.local.get(prefs, resolve));
+app.storage = prefs => chrome.storage.local.get(prefs);
 
 app.callbacks = {
   on: {},
