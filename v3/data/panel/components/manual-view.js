@@ -85,6 +85,14 @@ class ManualView extends HTMLElement {
         #bypass-list {
           grid-column: 2/5;
         }
+        #auth {
+          grid-column: 2/5;
+
+          a {
+            color: #0075ff;
+            text-decoration: none;
+          }
+        }
         #search {
           grid-column: 3/5;
           padding: 8px 5px;
@@ -139,6 +147,8 @@ class ManualView extends HTMLElement {
           <input type="checkbox" id="no-prompt" data-value="false">
           <label for="no-prompt" title="Do not prompt for authentication if password is saved">No Prompt</label>
         </div>
+        <span>Authentication:</span>
+        <span id="auth">For proxies require authentication, read <a id="auth-link" target="_blank">FAQ 20</a></span>
         <span>Direct:</span>
         <input type="text" id="bypass-list" placeholder="comma separated list of IPs" data-value="localhost, 127.0.0.1, 192.168.8.0" value="localhost, 127.0.0.1, 192.168.8.0">
         <span>Search</span>
@@ -254,6 +264,9 @@ class ManualView extends HTMLElement {
     if (/Firefox/.test(navigator.userAgent)) {
       [...this.shadowRoot.querySelectorAll('.chrome')].forEach(e => e.classList.add('disabled'));
     }
+    // auth
+    this.shadowRoot.getElementById('auth-link').href = chrome.runtime.getManifest().homepage_url + '#faq20';
+
     // mirroring HTTP
     this.shadowRoot.getElementById('http-host').addEventListener('input', ({target}) => {
       this.shadowRoot.getElementById('ssl-host').value =
