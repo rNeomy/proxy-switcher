@@ -237,17 +237,20 @@ class PacView extends HTMLElement {
     try {
       const href = this.shadowRoot.getElementById('href');
       const pac = href.value;
-      href.dataset.value = pac;
 
-      await chrome.permissions.request({
+      const granted = await chrome.permissions.request({
         origins: [pac]
       });
+      if (!granted) {
+        throw Error('Permission denied');
+      }
       const r = await fetch(pac);
       if (!r.ok) {
         throw Error('Cannot access this resource');
       }
       const pacScript = await r.text();
       this.set('script', pacScript, true);
+      href.dataset.value = pac;
       this.shadowRoot.getElementById('pac-2').dispatchEvent(new Event('change'));
     }
     catch (e) {
@@ -259,16 +262,18 @@ class PacView extends HTMLElement {
     try {
       const href = this.shadowRoot.getElementById('href');
       const pac = href.value;
-      href.dataset.value = pac;
 
       if (pac.startsWith('file:///')) {
         if (this.inlineDisabled) {
           app.emit('notify', 'Inline PAC script is not supported in Firefox');
           return;
         }
-        await chrome.permissions.request({
+        const granted = await chrome.permissions.request({
           origins: [pac]
         });
+        if (!granted) {
+          throw Error('Permission denied');
+        }
         const r = await fetch(pac);
         if (!r.ok) {
           throw Error('Cannot access this resource');
@@ -277,6 +282,7 @@ class PacView extends HTMLElement {
         this.set('script', pacScript, true);
       }
 
+      href.dataset.value = pac;
       chrome.storage.local.set({
         'last-pac': href.value
       });
