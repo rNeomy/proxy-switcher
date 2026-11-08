@@ -5,22 +5,89 @@ const SEARCH_SOURCES = [
   {id: 'monosans', label: 'monosans SOCKS5', url: 'https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/socks5.txt'}
 ];
 
+function getLastErrorMessage() {
+  try {
+    const le = (typeof chrome !== 'undefined' && chrome && chrome.runtime) ? chrome.runtime.lastError : null;
+    if (!le) {
+      return null;
+    }
+    return (le && le.message) || String(le);
+  }
+  catch (e) {
+    return null;
+  }
+}
+
+search.setProxy = config => new Promise((resolve, reject) => {
+  try {
+    chrome.proxy.settings.set(config, () => {
+      const msg = getLastErrorMessage();
+      if (msg) {
+        reject(Error(msg));
+      }
+      else {
+        resolve();
+      }
+    });
+  }
+  catch (e) {
+    reject(e);
+  }
+});
+
+search.parseEntry = str => {
+  if (str === null || typeof str === 'undefined') {
+    return null;
+  }
+  let entry = String(str).trim();
+  if (!entry || entry.startsWith('#')) {
+    return null;
+  }
+  if (entry.startsWith('socks5://')) {
+    entry = entry.slice('socks5://'.length);
+  }
+  if (!entry || entry.includes('@')) {
+    return null;
+  }
+  const match = entry.match(/^(.+):(\d+)$/);
+  if (!match) {
+    return null;
+  }
+  let host = match[1].trim();
+  if (host.startsWith('[') && host.endsWith(']')) {
+    host = host.slice(1, -1).trim();
+  }
+  const port = Number(match[2]);
+  if (!host || !Number.isFinite(port) || port < 1 || port > 65535) {
+    return null;
+  }
+  return {host, port};
+};
+
+search.formatHostPort = info => {
+  if (!info || !info.host) {
+    return '';
+  }
+  const port = info.port;
+  return info.host.includes(':') ? `[${info.host}]:${port}` : `${info.host}:${port}`;
+};
+
 search.parseList = text => {
   const out = [];
   String(text || '').split(/\r?\n/).forEach(line => {
-    let entry = line.trim();
+    const entry = line.trim();
     if (!entry || entry.startsWith('#')) {
       return;
     }
-    if (entry.startsWith('socks5://')) {
-      entry = entry.slice('socks5://'.length);
+    let cleaned = entry;
+    if (cleaned.startsWith('socks5://')) {
+      cleaned = cleaned.slice('socks5://'.length);
     }
-    if (entry.includes('@')) {
+    if (cleaned.includes('@')) {
       return;
     }
-    const match = entry.match(/^(.+):(\d+)$/);
-    if (match) {
-      out.push(entry);
+    if (search.parseEntry(cleaned)) {
+      out.push(cleaned);
     }
   });
   return out;
@@ -51,11 +118,15 @@ search.fetchSource = source => fetch(source.url).then(r => {
 });
 
 search.convert = str => {
-  const [host, port] = str.split(':');
+  const parsed = search.parseEntry(str);
+  if (!parsed) {
+    throw Error(`malformed proxy entry: ${str}`);
+  }
+  const {host, port} = parsed;
 
   const proxy = {
     host,
-    port: Number(port),
+    port,
     scheme: 'socks5'
   };
   return {
@@ -79,22 +150,30 @@ search.ping = href => new Promise((resolve, reject) => {
     method: 'HEAD'
   }).then(resolve, reject).finally(() => clearTimeout(timer));
 });
-search.verify = (proxy, logFn) => new Promise((resolve, reject) => chrome.proxy.settings.set(proxy, () => {
+search.verify = (proxy, logFn) => search.setProxy(proxy).then(() => {
   const track = (href, label) => search.ping(href).then(
     () => {
       if (logFn) logFn(label + ' ok');
-      resolve();
+      return true;
     },
     e => {
       if (logFn) logFn(label + ' failed (' + ((e && e.message) || e) + ')');
       return false;
     }
   );
-  Promise.all([
+  return Promise.all([
     track('https://raw.githubusercontent.com/rNeomy/proxy-switcher/master/LICENSE', 'ping LICENSE'),
     track('https://raw.githubusercontent.com/rNeomy/proxy-switcher/master/README.md', 'ping README')
-  ]).then(() => reject(Error('Ping failed')));
-}));
+  ]).then(results => {
+    if (results.some(r => r)) {
+      return;
+    }
+    throw Error('Ping failed');
+  });
+}, err => {
+  if (logFn) logFn('set proxy failed (' + ((err && err.message) || err) + ')');
+  throw err;
+});
 
 class SearchDialog extends HTMLElement {
   constructor() {
@@ -295,15 +374,15 @@ class SearchDialog extends HTMLElement {
 
   async _setDirect() {
     this.log('switching to direct before fetching proxies...');
-    await new Promise(resolve => {
-      try {
-        chrome.proxy.settings.set({value: {mode: 'direct'}}, () => resolve());
-      }
-      catch (e) {
-        resolve();
-      }
-    });
+    try {
+      await search.setProxy({value: {mode: 'direct'}});
+    }
+    catch (e) {
+      this.log('switch to direct failed (' + ((e && e.message) || e) + ')');
+      return false;
+    }
     this.log('switched to direct (mode=direct)');
+    return true;
   }
 
   log(message) {
@@ -415,7 +494,7 @@ class SearchDialog extends HTMLElement {
 
   _showConsent(info) {
     if (this._consentTargetEl) {
-      this._consentTargetEl.textContent = `${info.host}:${info.port}`;
+      this._consentTargetEl.textContent = search.formatHostPort(info);
     }
     this._phase = 'consent';
     this._updateToggle();
@@ -527,46 +606,80 @@ class SearchDialog extends HTMLElement {
   }
 
   async _restore() {
-    if (!this._needsRestore || !this._original) {
-      return;
+    if (!this._needsRestore) {
+      return true;
     }
-    this.log(`restore requested (mode=${this._original.mode})`);
-    this._needsRestore = false;
-    await new Promise(resolve => {
+    if (!this._original) {
+      this.log('restore requested (original unknown, clearing proxy control)');
+      if (chrome.proxy.settings.clear) {
+        try {
+          await new Promise((resolve, reject) => {
+            try {
+              chrome.proxy.settings.clear({}, () => {
+                const msg = getLastErrorMessage();
+                if (msg) {
+                  reject(Error(msg));
+                }
+                else {
+                  resolve();
+                }
+              });
+            }
+            catch (e) {
+              reject(e);
+            }
+          });
+        }
+        catch (e) {
+          this.log('restore failed (' + ((e && e.message) || e) + ')');
+          return false;
+        }
+        this._needsRestore = false;
+        this.log('restore complete (cleared proxy control)');
+        return true;
+      }
       try {
-        chrome.proxy.settings.set({value: this._original}, () => {
-          this.log(`restore complete (mode=${this._original.mode})`);
-          resolve();
-        });
+        await search.setProxy({value: {mode: 'direct'}});
       }
       catch (e) {
         this.log('restore failed (' + ((e && e.message) || e) + ')');
-        resolve();
+        return false;
       }
-    });
+      this._needsRestore = false;
+      this.log('restore complete (mode=direct, fallback for unknown original)');
+      return true;
+    }
+    this.log(`restore requested (mode=${this._original.mode})`);
+    try {
+      await search.setProxy({value: this._original});
+    }
+    catch (e) {
+      this.log('restore failed (' + ((e && e.message) || e) + ')');
+      return false;
+    }
+    this._needsRestore = false;
+    this.log(`restore complete (mode=${this._original.mode})`);
+    return true;
   }
 
   async _applyCandidate(proxy) {
     this.log('apply candidate requested');
-    await new Promise(resolve => {
-      try {
-        chrome.proxy.settings.set(proxy, () => {
-          this.log('candidate applied');
-          resolve();
-        });
-      }
-      catch (e) {
-        this.log('apply candidate failed (' + ((e && e.message) || e) + ')');
-        resolve();
-      }
-    });
+    try {
+      await search.setProxy(proxy);
+    }
+    catch (e) {
+      this.log('apply candidate failed (' + ((e && e.message) || e) + ')');
+      return false;
+    }
+    this.log('candidate applied');
+    return true;
   }
 
   _waitConsent(info, source) {
     return new Promise(resolve => {
       this._showConsent(info);
       const label = source && source.label ? ` from ${source.label}` : '';
-      this.log(`valid proxy found${label}, consent shown for ${info.host}:${info.port}`);
+      this.log(`valid proxy found${label}, consent shown for ${search.formatHostPort(info)}`);
       this._consentResolve = value => {
         this._consentResolve = null;
         resolve(value);
@@ -581,12 +694,15 @@ class SearchDialog extends HTMLElement {
   }
 
   async _loadSources() {
-    if (this._original) {
-      this._needsRestore = true;
-    }
-    await this._setDirect();
+    this._needsRestore = true;
+    const directOk = await this._setDirect();
     let queues = null;
     try {
+      if (!directOk) {
+        this.log('fetch aborted: switch to direct failed');
+        queues = null;
+        return queues;
+      }
       this.log(`fetching ${SEARCH_SOURCES.length} proxy sources...`);
       const settled = await Promise.allSettled(SEARCH_SOURCES.map(source => {
         this.log(`fetching ${source.label}...`);
@@ -652,11 +768,18 @@ class SearchDialog extends HTMLElement {
       const original = await new Promise(resolve => {
         try {
           chrome.proxy.settings.get({}, result => {
+            const msg = getLastErrorMessage();
+            if (msg) {
+              this.log('original read failed (' + msg + ')');
+              resolve(null);
+              return;
+            }
             const value = result && result.value ? result.value : null;
             resolve(value ? JSON.parse(JSON.stringify(value)) : value);
           });
         }
         catch (e) {
+          this.log('original read failed (' + ((e && e.message) || e) + ')');
           resolve(null);
         }
       });
@@ -729,10 +852,21 @@ class SearchDialog extends HTMLElement {
             break;
           }
           this.log(`attempt ${attempt}: source ${candidateSource.label} trying ${candidateEntry}`);
-          const candidate = search.convert(candidateEntry);
+          let candidate = null;
+          try {
+            candidate = search.convert(candidateEntry);
+          }
+          catch (e) {
+            this.log(`attempt ${attempt}: skipping malformed entry ${candidateEntry} (${(e && e.message) || e})`);
+            if (this._cancelled) {
+              break;
+            }
+            await this._delay(800);
+            continue;
+          }
           candidate.source = candidateSource;
-          this.log(`attempt ${attempt}: source ${candidateSource.label} candidate ${candidate.info.host}:${candidate.info.port}`);
-          this.log(`attempt ${attempt}: transient verify start for ${candidate.info.host}:${candidate.info.port}`);
+          this.log(`attempt ${attempt}: source ${candidateSource.label} candidate ${search.formatHostPort(candidate.info)}`);
+          this.log(`attempt ${attempt}: transient verify start for ${search.formatHostPort(candidate.info)}`);
           this._needsRestore = true;
           let ok = false;
           try {
@@ -791,7 +925,13 @@ class SearchDialog extends HTMLElement {
 
       this.log('apply applied, applying candidate');
       this._needsRestore = true;
-      await this._applyCandidate(valid.proxy);
+      const applied = await this._applyCandidate(valid.proxy);
+      if (!applied) {
+        this.log('final apply failed, restoring original');
+        await this._restore();
+        this._succeeded = false;
+        return null;
+      }
       this._succeeded = true;
       this._needsRestore = false;
       this.log('search completed, candidate kept');

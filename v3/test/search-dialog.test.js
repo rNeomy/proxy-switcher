@@ -126,15 +126,23 @@ function createHarness({
   outcomeByHost = {},
   pingDelay = 0,
   proxiflyFail = false,
-  monosansFail = false
+  monosansFail = false,
+  original = {mode: 'fixed_servers', rules: {proxyForHttp: {host: '9.9.9.9', port: 8080, scheme: 'http'}}},
+  setErrorByHost = {},
+  shouldFailSet = null,
+  shouldFailClear = false,
+  getError = null
 } = {}) {
   const events = [];
   const setCalls = [];
+  const clearCalls = [];
   const ports = [];
+  const validatedEvents = [];
   // proxy.js update() replay: records dataset.searching at call time, so a
   // test can assert the re-sync only happens once the flag is cleared.
   const updateCalls = [];
-  const original = {mode: 'fixed_servers', rules: {proxyForHttp: {host: '9.9.9.9', port: 8080, scheme: 'http'}}};
+  let mutableShouldFailSet = shouldFailSet;
+  let mutableShouldFailClear = shouldFailClear;
 
   const windowHost = makeListenerHost();
   const fakeWindow = {
@@ -150,6 +158,12 @@ function createHarness({
     proxy: {
       settings: {
         get(_query, callback) {
+          if (getError) {
+            chromeMock.runtime.lastError = {message: getError};
+            callback(undefined);
+            chromeMock.runtime.lastError = undefined;
+            return;
+          }
           callback({value: original});
         },
         set(config, callback) {
@@ -158,8 +172,36 @@ function createHarness({
           const label = `set:${snapshot.value.mode}:${snapshot.value.rules && snapshot.value.rules.proxyForHttp ? snapshot.value.rules.proxyForHttp.host : ''}`;
           events.push(`${label}:start`);
           const done = () => {
+            let errorMessage = null;
+            const host = snapshot.value.rules && snapshot.value.rules.proxyForHttp ? snapshot.value.rules.proxyForHttp.host : null;
+            if (host && setErrorByHost[host]) {
+              errorMessage = setErrorByHost[host];
+            }
+            else if (typeof mutableShouldFailSet === 'function') {
+              const result = mutableShouldFailSet(snapshot, setCalls.length - 1);
+              if (result) {
+                errorMessage = typeof result === 'string' ? result : 'set denied';
+              }
+            }
+            else if (mutableShouldFailSet) {
+              errorMessage = typeof mutableShouldFailSet === 'string' ? mutableShouldFailSet : 'set denied';
+            }
+            chromeMock.runtime.lastError = errorMessage ? {message: errorMessage} : undefined;
             events.push(`${label}:complete`);
             if (callback) callback();
+            chromeMock.runtime.lastError = undefined;
+          };
+          setTimeout(done, 1);
+        },
+        clear(details, callback) {
+          clearCalls.push(details ? JSON.parse(JSON.stringify(details)) : {});
+          events.push('clear:start');
+          const done = () => {
+            const errorMessage = mutableShouldFailClear ? 'clear denied' : null;
+            chromeMock.runtime.lastError = errorMessage ? {message: errorMessage} : undefined;
+            events.push('clear:complete');
+            if (callback) callback();
+            chromeMock.runtime.lastError = undefined;
           };
           setTimeout(done, 1);
         }
@@ -182,9 +224,10 @@ function createHarness({
   };
 
   function lastCandidateHost() {
+    const originalHost = original && original.rules && original.rules.proxyForHttp ? original.rules.proxyForHttp.host : null;
     for (let i = setCalls.length - 1; i >= 0; i -= 1) {
       const host = setCalls[i].value.rules && setCalls[i].value.rules.proxyForHttp && setCalls[i].value.rules.proxyForHttp.host;
-      if (host && host !== original.rules.proxyForHttp.host) {
+      if (host && host !== originalHost) {
         return host;
       }
     }
@@ -241,6 +284,15 @@ function createHarness({
     define(tag, cls) { registry[tag] = cls; }
   };
 
+  class MockCustomEvent {
+    constructor(type, opts) {
+      this.type = type;
+      this.detail = opts && opts.detail;
+      this.bubbles = !!(opts && opts.bubbles);
+      this.composed = !!(opts && opts.composed);
+    }
+  }
+
   const context = {
     console,
     chrome: chromeMock,
@@ -250,6 +302,7 @@ function createHarness({
     update() { updateCalls.push(fakeDocument.body.dataset.searching); },
     HTMLElement: MockHTMLElement,
     customElements: fakeCustomElements,
+    CustomEvent: MockCustomEvent,
     setTimeout,
     clearTimeout,
     Date,
@@ -261,6 +314,13 @@ function createHarness({
   const SearchDialog = loadSearchDialog(context);
   assert.equal(registry['search-dialog'], SearchDialog, 'component should register as search-dialog');
   const el = new SearchDialog();
+  el.dispatchEvent = evt => {
+    if (evt && evt.type === 'search-validated') {
+      validatedEvents.push(evt);
+      events.push('search-validated');
+    }
+    return true;
+  };
   const elements = lastElements;
   const logEl = elements['search-log'];
   const dialog = elements.dialog;
@@ -276,7 +336,9 @@ function createHarness({
     el, dialog, consentDialog, consentTarget, consentApplyBtn, consentFindBtn, consentAbortBtn,
     logEl, toggleBtn, closeBtn, fakeDocument,
     cancelBtn: toggleBtn, confirmBtn: consentApplyBtn, applyBtn: consentApplyBtn,
-    setCalls, events, original, window: fakeWindow, ports, updateCalls,
+    setCalls, clearCalls, events, original, window: fakeWindow, ports, updateCalls, validatedEvents,
+    setErrorPredicate: fn => { mutableShouldFailSet = fn; },
+    setClearFailure: value => { mutableShouldFailClear = value; },
     get port() { return ports[ports.length - 1] || null; },
     logText: () => logEl.textContent,
     candidate(host) {
@@ -284,6 +346,9 @@ function createHarness({
     },
     restored() {
       return setCalls.some(config => JSON.stringify(config.value) === JSON.stringify(original));
+    },
+    cleared() {
+      return clearCalls.length > 0;
     },
     hasDirect() {
       return setCalls.some(config => config.value.mode === 'direct');
@@ -568,5 +633,130 @@ describe('search-dialog component', () => {
     assert.match(ui, /dataset\.searching/);
     const proxy = fs.readFileSync(path.join(__dirname, '../data/panel/proxy.js'), 'utf8');
     assert.match(proxy, /dataset\.searching/);
+  });
+
+  it('failed final apply does not set succeeded or dispatch search-validated', async () => {
+    const harness = createHarness({proxifly: ['1.2.3.4:1080'], monosans: [], outcomeByHost: {'1.2.3.4': 'success'}});
+    const started = harness.el.start();
+    await harness.waitFor(() => harness.consentDialog.open === true, 8000);
+    let failFirstFinal = true;
+    harness.setErrorPredicate(config => {
+      const host = config.value.rules && config.value.rules.proxyForHttp && config.value.rules.proxyForHttp.host;
+      if (host === '1.2.3.4' && failFirstFinal) {
+        failFirstFinal = false;
+        return 'final apply denied';
+      }
+      return null;
+    });
+    harness.consentApplyBtn.click();
+    const result = await started;
+    assert.equal(result, null, 'failed final apply should return null');
+    assert.equal(harness.validatedEvents.length, 0, 'no search-validated event on failed apply');
+    assert.match(harness.logText(), /apply candidate failed \(final apply denied\)/);
+    assert.match(harness.logText(), /final apply failed, restoring original/);
+    assert.ok(harness.restored(), 'should restore original after failed final apply');
+    assert.equal(harness.dialog.open, true, 'dialog stays open for log review');
+    assert.equal(harness.consentDialog.open, false, 'consent dialog already closed on apply click');
+    assert.ok(harness.port && harness.port.disconnected);
+    assert.equal(harness.port.messages[harness.port.messages.length - 1].succeeded, false);
+    harness.closeBtn.click();
+  });
+
+  it('search.verify rejects immediately when candidate set fails (lastError)', async () => {
+    const harness = createHarness({
+      proxifly: ['1.1.1.1:1080', '2.2.2.2:1080'],
+      monosans: [],
+      outcomeByHost: {'1.1.1.1': 'success', '2.2.2.2': 'success'},
+      setErrorByHost: {'1.1.1.1': 'verify set denied'}
+    });
+    const started = harness.el.start();
+    await harness.waitFor(() => harness.consentDialog.open === true, 8000);
+    assert.match(harness.logText(), /set proxy failed \(verify set denied\)/);
+    assert.match(harness.logText(), /attempt 1: verify failed/);
+    assert.equal(harness.consentTarget.textContent, '2.2.2.2:1080');
+    harness.consentAbortBtn.click();
+    const result = await started;
+    assert.equal(result, null);
+  });
+
+  it('search.convert handles IPv6 without corrupting host', async () => {
+    const context = {
+      console,
+      chrome: {proxy: {settings: {get(c, cb) { cb({value: null}); }, set(c, cb) { cb(); }, clear(c, cb) { cb(); }}}, runtime: {lastError: undefined, connect: () => ({postMessage() {}, disconnect() {}})}},
+      fetch: () => Promise.resolve({ok: true, text: async () => ''}),
+      window: {},
+      document: {body: {dataset: {}}, createElement: () => ({textContent: ''}), getElementById: () => null},
+      HTMLElement: class { attachShadow() { return {innerHTML: '', getElementById: () => null}; } },
+      customElements: {define() {}},
+      setTimeout, clearTimeout, Date, JSON, Promise, Error,
+      Math: {floor: Math.floor, random: () => 0.999}
+    };
+    const code = fs.readFileSync(path.join(__dirname, '../data/panel/components/search-dialog.js'), 'utf8');
+    const transformed = code.replace(/export\s*\{search,\s*SearchDialog\};?/, '');
+    vm.createContext(context);
+    vm.runInContext(transformed + '\n;globalThis.__search = search;', context);
+    const search = context.__search;
+    const unbracketed = search.convert('2001:db8::1:1080');
+    assert.equal(unbracketed.info.host, '2001:db8::1');
+    assert.equal(unbracketed.info.port, 1080);
+    assert.equal(unbracketed.proxy.value.rules.proxyForHttp.host, '2001:db8::1');
+    const bracketed = search.convert('[2001:db8::1]:1080');
+    assert.equal(bracketed.info.host, '2001:db8::1');
+    assert.equal(bracketed.info.port, 1080);
+    assert.equal(search.formatHostPort(bracketed.info), '[2001:db8::1]:1080');
+    const ipv4 = search.convert('1.2.3.4:1080');
+    assert.equal(ipv4.info.host, '1.2.3.4');
+    assert.equal(search.formatHostPort(ipv4.info), '1.2.3.4:1080');
+    assert.throws(() => search.convert('not-a-proxy'));
+  });
+
+  it('IPv6 candidate flows through verify and consent with bracketed display', async () => {
+    const harness = createHarness({
+      proxifly: ['[2001:db8::1]:1080'],
+      monosans: [],
+      outcomeByHost: {'2001:db8::1': 'success'}
+    });
+    const started = harness.el.start();
+    await harness.waitFor(() => harness.consentDialog.open === true, 8000);
+    assert.equal(harness.consentTarget.textContent, '[2001:db8::1]:1080');
+    assert.ok(harness.candidate('2001:db8::1'));
+    harness.consentApplyBtn.click();
+    const result = await started;
+    assert.ok(result);
+    assert.equal(result.info.host, '2001:db8::1');
+    assert.equal(result.info.port, 1080);
+    assert.equal(harness.validatedEvents.length, 1);
+    assert.equal(harness.validatedEvents[0].detail.info.host, '2001:db8::1');
+  });
+
+  it('null original still restores via clear after forced direct', async () => {
+    const harness = createHarness({
+      proxifly: ['1.2.3.4:1080'],
+      monosans: [],
+      outcomeByHost: {'1.2.3.4': 'fail'},
+      original: null
+    });
+    const started = harness.el.start();
+    await harness.waitFor(() => harness.logText().includes('attempt 1: verify failed'), 8000);
+    harness.toggleBtn.click();
+    const result = await started;
+    assert.equal(result, null);
+    assert.equal(harness.hasDirect(), true);
+    assert.ok(harness.cleared(), 'null original should be restored via clear()');
+    assert.match(harness.logText(), /original unknown, clearing proxy control/);
+    assert.match(harness.logText(), /restore complete \(cleared proxy control\)/);
+  });
+
+  it('direct switch failure aborts fetch and restores', async () => {
+    const harness = createHarness({
+      proxifly: ['1.2.3.4:1080'],
+      monosans: [],
+      shouldFailSet: config => (config.value.mode === 'direct' ? 'direct denied' : null)
+    });
+    const result = await harness.el.start();
+    assert.equal(result, null);
+    assert.match(harness.logText(), /switch to direct failed \(direct denied\)/);
+    assert.match(harness.logText(), /fetch aborted: switch to direct failed/);
+    assert.equal(harness.candidate('1.2.3.4'), false);
   });
 });
