@@ -88,9 +88,26 @@ function loadPac() {
   let code = fs.readFileSync(path.join(__dirname, '../data/panel/components/pac-view.js'), 'utf8');
   code = code.replace(/^import .*$/m, '');
   let captured = null;
+  const calls = {emit: [], storageSet: []};
   const context = {
     console,
     clearTimeout,
+    setTimeout,
+    navigator: {userAgent: ''},
+    document: {
+      createElement: () => ({})
+    },
+    app: {
+      emit: (...args) => calls.emit.push(args),
+      storage: defaults => Promise.resolve(defaults || {})
+    },
+    chrome: {
+      storage: {
+        local: {
+          set: obj => calls.storageSet.push(obj)
+        }
+      }
+    },
     HTMLElement: class {},
     Event: class {
       constructor(type, options) {
@@ -111,7 +128,61 @@ function loadPac() {
   if (!captured) {
     throw new Error('pac-view constructor was not captured');
   }
+  captured.testCalls = calls;
   return captured;
+}
+
+function createPacFake(Ctor) {
+  const elements = {};
+  let changeHandler = null;
+  const makeEl = id => {
+    const listeners = {};
+    const el = {
+      id,
+      value: '',
+      dataset: {value: ''},
+      disabled: false,
+      checked: false,
+      textContent: '',
+      listeners,
+      addEventListener(type, cb) {
+        (listeners[type] = listeners[type] || []).push(cb);
+      },
+      dispatchEvent() {},
+      focus() {},
+      click() {},
+      appendChild() {}
+    };
+    return el;
+  };
+  const editor = makeEl('editor');
+  editor.editor = {
+    on(type, cb) {
+      if (type === 'change') {
+        changeHandler = cb;
+      }
+    }
+  };
+  editor.focus = () => {};
+  elements['editor'] = editor;
+  elements['apply-script'] = makeEl('apply-script');
+  elements['apply-script'].disabled = true;
+  const fake = Object.create(Ctor.prototype);
+  fake.shadowRoot = {
+    getElementById(id) {
+      if (!elements[id]) {
+        elements[id] = makeEl(id);
+      }
+      return elements[id];
+    },
+    querySelector: () => null,
+    querySelectorAll: () => []
+  };
+  return {
+    fake,
+    elements,
+    getChangeHandler: () => changeHandler
+  };
 }
 
 describe('manual-view update null guards (P0-5)', () => {
@@ -226,5 +297,88 @@ describe('pac-view null guards (P0-5)', () => {
       getElementById: () => null
     };
     assert.equal(fake.mode, 'script');
+  });
+
+  it('applyScript does not throw when editor is missing', () => {
+    const Ctor = loadPac();
+    const fake = Object.create(Ctor.prototype);
+    fake.shadowRoot = {
+      querySelector: () => null,
+      getElementById: () => null
+    };
+    assert.doesNotThrow(() => fake.applyScript());
+    assert.deepEqual(Ctor.testCalls.emit, []);
+    assert.deepEqual(Ctor.testCalls.storageSet, []);
+  });
+});
+
+describe('pac-view apply changes button', () => {
+  it('applyScript stores and emits the script and marks it clean', () => {
+    const Ctor = loadPac();
+    const {fake, elements} = createPacFake(Ctor);
+    const editor = elements['editor'];
+    const btn = elements['apply-script'];
+    editor.value = 'function FindProxyForURL() { return "DIRECT"; }';
+    editor.dataset.value = 'old script';
+    btn.disabled = false;
+    fake.applyScript();
+    assert.equal(Ctor.testCalls.emit.length, 1);
+    assert.equal(Ctor.testCalls.emit[0][0], 'change-proxy');
+    assert.equal(Ctor.testCalls.emit[0][1], 'pac_script');
+    assert.equal(Ctor.testCalls.storageSet.length, 1);
+    assert.equal(Ctor.testCalls.storageSet[0].script, editor.value);
+    assert.equal(editor.dataset.value, editor.value);
+    assert.equal(btn.disabled, true);
+  });
+
+  it('set(script) marks the loaded script as clean', () => {
+    const Ctor = loadPac();
+    const {fake, elements} = createPacFake(Ctor);
+    const editor = elements['editor'];
+    const btn = elements['apply-script'];
+    btn.disabled = false;
+    fake.set('script', 'function FindProxyForURL() {}', false);
+    assert.equal(editor.value, 'function FindProxyForURL() {}');
+    assert.equal(editor.dataset.value, 'function FindProxyForURL() {}');
+    assert.equal(btn.disabled, true);
+    assert.deepEqual(Ctor.testCalls.emit, []);
+    assert.deepEqual(Ctor.testCalls.storageSet, []);
+  });
+
+  it('typing does not apply the script; only the button does', () => {
+    const Ctor = loadPac();
+    const {fake, elements, getChangeHandler} = createPacFake(Ctor);
+    fake.connectedCallback();
+    const editor = elements['editor'];
+    const btn = elements['apply-script'];
+    const changeHandler = getChangeHandler();
+    assert.ok(changeHandler, 'editor change handler was registered');
+    // clean state: button disabled, change with no edits keeps it disabled
+    assert.equal(btn.disabled, true);
+    changeHandler();
+    assert.equal(btn.disabled, true);
+    // dirty state: editing enables the button without emitting/storing
+    editor.value += '\n// edited';
+    changeHandler();
+    assert.equal(btn.disabled, false);
+    assert.deepEqual(Ctor.testCalls.emit, []);
+    assert.deepEqual(Ctor.testCalls.storageSet, []);
+    // clicking Apply Changes stores + emits and marks clean
+    const clickListeners = btn.listeners['click'] || [];
+    assert.equal(clickListeners.length, 1);
+    clickListeners[0]();
+    assert.equal(Ctor.testCalls.emit.length, 1);
+    assert.equal(Ctor.testCalls.emit[0][0], 'change-proxy');
+    assert.equal(Ctor.testCalls.emit[0][1], 'pac_script');
+    assert.equal(Ctor.testCalls.storageSet.length, 1);
+    assert.equal(Ctor.testCalls.storageSet[0].script, editor.value);
+    assert.equal(btn.disabled, true);
+    // typing back to the applied value disables the button again
+    editor.value += '\n// more';
+    changeHandler();
+    assert.equal(btn.disabled, false);
+    editor.value = editor.dataset.value;
+    changeHandler();
+    assert.equal(btn.disabled, true);
   });
 });

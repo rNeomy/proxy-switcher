@@ -85,6 +85,17 @@ class PacView extends HTMLElement {
           background: #52af52 url(images/ok.svg) center center no-repeat;
           background-size: 14px;
         }
+        .editor-wrap {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        #apply-script {
+          color: #fff;
+          background-color: #52af52;
+          padding: 8px 12px;
+          align-self: flex-end;
+        }
         #remove {
           background: #eea345 url(images/no.svg) center center no-repeat;
           background-size: 22px;
@@ -110,7 +121,10 @@ class PacView extends HTMLElement {
           <input type="submit" id="apply" disabled="true" value="">
         </form>
         <label class="chrome"><input id="pac-2" type="radio" name="pac" value="script" data-mode="pac_script">Inline</label>
-        <editor-view id="editor" for="pac-2" class="chrome"></editor-view>
+        <div class="editor-wrap chrome">
+          <editor-view id="editor" for="pac-2" class="chrome"></editor-view>
+          <input type="button" id="apply-script" value="Apply Changes" disabled>
+        </div>
       </div>
       <datalist id="pacs"></datalist>
     `;
@@ -120,6 +134,9 @@ class PacView extends HTMLElement {
 
     const editor = this.shadowRoot.getElementById('editor');
     editor.value = SAMPLE;
+    editor.dataset.value = SAMPLE;
+    const applyScriptBtn = this.shadowRoot.getElementById('apply-script');
+    applyScriptBtn.disabled = true;
 
     // change in pac url
     const reload = this.shadowRoot.getElementById('reload');
@@ -145,18 +162,12 @@ class PacView extends HTMLElement {
       });
     });
 
-    // pac_script -> script
-    const changed = () => {
-      app.emit('change-proxy', 'pac_script');
-
-      chrome.storage.local.set({
-        'script': editor.value
-      });
-    };
-    editor.editor.on('change', e => {
-      clearTimeout(editor.timeout);
-      editor.timeout = setTimeout(changed, 300);
+    // typing only marks the editor dirty; the script is applied
+    // explicitly via the Apply Changes button (applyScript)
+    editor.editor.on('change', () => {
+      applyScriptBtn.disabled = editor.value === editor.dataset.value;
     });
+    applyScriptBtn.addEventListener('click', () => this.applyScript());
 
     this.shadowRoot.getElementById('pacs').addEventListener('input', () => {
       href.dispatchEvent('keyup', {
@@ -312,6 +323,22 @@ class PacView extends HTMLElement {
     href.value = url;
     app.emit('change-proxy', 'pac_script');
   }
+  applyScript() {
+    const editor = this.shadowRoot.getElementById('editor');
+    if (!editor) {
+      return;
+    }
+    const value = editor.value;
+    editor.dataset.value = value;
+    const applyScriptBtn = this.shadowRoot.getElementById('apply-script');
+    if (applyScriptBtn) {
+      applyScriptBtn.disabled = true;
+    }
+    app.emit('change-proxy', 'pac_script');
+    chrome.storage.local.set({
+      'script': value
+    });
+  }
   set(mode, value, select = false) {
     if (mode === 'href') {
       const href = this.shadowRoot.getElementById('href');
@@ -334,7 +361,11 @@ class PacView extends HTMLElement {
         return;
       }
       editor.value = value;
-      clearTimeout(editor.timeout); // prevent editor from saving
+      editor.dataset.value = value;
+      const applyScriptBtn = this.shadowRoot.getElementById('apply-script');
+      if (applyScriptBtn) {
+        applyScriptBtn.disabled = true;
+      }
       if (select) {
         if (this.inlineDisabled) {
           const pac1 = this.shadowRoot.getElementById('pac-1');
