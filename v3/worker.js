@@ -3,6 +3,7 @@
 if (typeof importScripts !== 'undefined') {
   self.importScripts('/firefox.js');
   self.importScripts('/data/panel/utils.js');
+  self.importScripts('/data/panel/compare.js');
   self.importScripts('/managed.js');
 }
 

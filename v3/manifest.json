@@ -23,6 +23,7 @@
     "scripts": [
       "firefox.js",
       "data/panel/utils.js",
+      "data/panel/compare.js",
       "managed.js",
       "worker.js"
     ]
