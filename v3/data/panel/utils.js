@@ -24,10 +24,3 @@ app.emit = (id, value) => {
   (app.callbacks.once[id] || []).forEach(c => c(value));
   app.callbacks.once[id] = [];
 };
-
-app.notify = (e, callback) => chrome.notifications.create({
-  type: 'basic',
-  iconUrl: '/data/icons/48.png',
-  title: chrome.runtime.getManifest().name,
-  message: e.message || e
-}, callback);

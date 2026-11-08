@@ -6,7 +6,6 @@
   "default_locale": "en",
   "permissions": [
     "storage",
-    "notifications",
     "proxy"
   ],
   "optional_host_permissions": [
