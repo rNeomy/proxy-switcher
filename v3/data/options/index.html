@@ -54,6 +54,14 @@
     <button id="save">Save Options</button>
     <span id="toast"></span>
   </p>
+  <dialog id="reset-dialog" aria-labelledby="reset-dialog-title">
+    <h2 id="reset-dialog-title">Factory Reset?</h2>
+    <p>Factory Reset will delete all saved options and profiles and reload the extension. This cannot be undone.</p>
+    <form method="dialog">
+      <button value="cancel" autofocus>Cancel</button>
+      <button value="reset">Reset</button>
+    </form>
+  </dialog>
   <script src="../../firefox.js"></script>
   <script src="index.js"></script>
 </body>

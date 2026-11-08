@@ -115,21 +115,19 @@ document.getElementById('import').addEventListener('click', () => {
 });
 
 // reset
-document.getElementById('reset').addEventListener('click', e => {
-  if (e.detail === 0) {
-    return;
-  }
-  if (e.detail === 1) {
-    toast.textContent = 'Double-click to reset!';
-    window.setTimeout(() => toast.textContent = '', 750);
-  }
-  else {
+const resetDialog = document.getElementById('reset-dialog');
+document.getElementById('reset').addEventListener('click', () => {
+  resetDialog.showModal();
+});
+resetDialog.addEventListener('close', () => {
+  if (resetDialog.returnValue === 'reset') {
     localStorage.clear();
     chrome.storage.local.clear(() => {
       chrome.runtime.reload();
       window.close();
     });
   }
+  resetDialog.returnValue = '';
 });
 
 // support

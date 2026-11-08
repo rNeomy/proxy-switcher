@@ -91,3 +91,33 @@ p {
 .two :nth-child(even) {
   justify-self: end;
 }
+dialog:modal {
+  overscroll-behavior: contain;
+}
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+#reset-dialog {
+  max-width: min(35rem, calc(100vw - 4rem));
+  padding: 1.5rem 2rem;
+  box-sizing: border-box;
+}
+#reset-dialog p {
+  display: block;
+  white-space: normal;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+#reset-dialog h2 {
+  text-align: left;
+  background: none;
+  padding: 0;
+  margin: 0 0 0.5rem;
+}
+#reset-dialog form {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-top: 1rem;
+}
