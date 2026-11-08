@@ -12,13 +12,8 @@ const _ = chrome.i18n.getMessage;
 /* icon color */
 {
   let busy = false;
-  self.icon = async (config, reason) => {
-    if (busy) {
-      return;
-    }
-    console.info('icon', reason);
-    busy = true;
-
+  let pending = null;
+  const draw = async (config) => {
     try {
       let prefs = await chrome.storage.local.get(null);
       prefs = {
@@ -98,7 +93,26 @@ const _ = chrome.i18n.getMessage;
     catch (e) {
       console.error(e);
     }
-    busy = false;
+  };
+
+  self.icon = async (config, reason) => {
+    pending = {config, reason};
+    if (busy) {
+      return;
+    }
+    busy = true;
+
+    try {
+      while (pending) {
+        const next = pending;
+        pending = null;
+        console.info('icon', next.reason);
+        await draw(next.config);
+      }
+    }
+    finally {
+      busy = false;
+    }
   };
 }
 
