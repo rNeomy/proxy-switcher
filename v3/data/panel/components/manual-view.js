@@ -1,7 +1,5 @@
 /* global app, proxy */
 
-import {search} from './manual-view-search.js'
-
 class ManualView extends HTMLElement {
   constructor() {
     super();
@@ -94,12 +92,8 @@ class ManualView extends HTMLElement {
           }
         }
         #search {
-          grid-column: 3/5;
+          grid-column: 2/5;
           padding: 8px 5px;
-        }
-        #search-log {
-          overflow: hidden;
-          text-overflow: ellipsis;
         }
         input::-webkit-calendar-picker-indicator {
           display: none;
@@ -152,8 +146,7 @@ class ManualView extends HTMLElement {
         <span>Direct:</span>
         <input type="text" id="bypass-list" placeholder="comma separated list of IPs" data-value="localhost, 127.0.0.1, 192.168.8.0" value="localhost, 127.0.0.1, 192.168.8.0">
         <span>Search</span>
-        <span id="search-log">Find a free proxy server</span>
-        <input type="button" value="Search" id="search">
+        <input type="button" value="Find Free Socks Proxy" id="search">
       </div>
       <datalist id="profiles"></datalist>
     `;
@@ -315,14 +308,24 @@ class ManualView extends HTMLElement {
     this.shadowRoot.getElementById('remove').onclick = () => this.remove();
 
     // plug-ins
-    search.attach(
-      this.shadowRoot.getElementById('search'),
-      this.shadowRoot.getElementById('search-log'),
-      (proxy, name) => {
-        this.update(proxy.value, '');
-        this.shadowRoot.getElementById('profile').value = name;
+    const searchButton = this.shadowRoot.getElementById('search');
+    const dialogEl = document.getElementById('search-dialog');
+    if (dialogEl && typeof dialogEl.addEventListener === 'function') {
+      dialogEl.addEventListener('search-validated', e => {
+        const result = e && e.detail;
+        if (result && result.proxy && result.proxy.value) {
+          this.update(result.proxy.value, '');
+          this.shadowRoot.getElementById('profile').value = 'My New Proxy';
+        }
+      });
+    }
+    searchButton.addEventListener('click', () => {
+      const dialog = document.getElementById('search-dialog');
+      if (!dialog || typeof dialog.openDialog !== 'function') {
+        return;
       }
-    )
+      dialog.openDialog();
+    });
   }
   remove() {
     const profile = this.shadowRoot.getElementById('profile');

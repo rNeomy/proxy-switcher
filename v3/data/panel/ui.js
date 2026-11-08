@@ -51,6 +51,9 @@ const click = ({target, isTrusted}) => {
 document.addEventListener('click', click);
 
 app.on('proxy-changed', mode => {
+  if (document.body && document.body.dataset.searching === 'true') {
+    return;
+  }
   const tab = document.querySelector(`#tabs [data-mode="${mode}"]`);
   if (!tab) {
     return;

@@ -24,6 +24,9 @@ function update(callback = function() {}, store = true) {
       }
       return;
     }
+    if (document.body && document.body.dataset.searching === 'true') {
+      return;
+    }
     const {value, levelOfControl} = result;
     app.emit('proxy-changed', value.mode);
     app.emit('proxy-controlled', levelOfControl);

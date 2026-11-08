@@ -155,6 +155,43 @@ chrome.runtime.onMessage.addListener(request => {
   }
 });
 
+// Search guard: dialog holds a long-lived port per search. If the popup
+// closes mid-search (no search-complete), the port disconnects and the
+// worker restores the pre-search proxy value held in search-start.
+if (chrome.runtime && chrome.runtime.onConnect) {
+  chrome.runtime.onConnect.addListener(port => {
+    if (port.name !== 'search-guard') {
+      return;
+    }
+    let guardValue = null;
+    port.onMessage.addListener(message => {
+      if (!message) {
+        return;
+      }
+      if (message.type === 'search-start') {
+        guardValue = message.value ? JSON.parse(JSON.stringify(message.value)) : null;
+        console.info('search guard started, mode=' + (guardValue && guardValue.mode));
+      }
+      else if (message.type === 'search-complete') {
+        guardValue = null;
+        console.info('search guard completed, succeeded=' + !!message.succeeded);
+      }
+    });
+    port.onDisconnect.addListener(() => {
+      if (!guardValue) {
+        return;
+      }
+      console.info('search guard disconnected, restoring proxy mode=' + guardValue.mode);
+      chrome.proxy.settings.set({value: guardValue}, () => {
+        const lastError = chrome.runtime.lastError;
+        if (lastError) {
+          console.error('search guard restore failed', lastError);
+        }
+      });
+    });
+  });
+}
+
 // pref changes
 chrome.storage.onChanged.addListener(ps => {
   if (ps.color) {
