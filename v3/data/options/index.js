@@ -9,7 +9,6 @@ const storage = prefs => new Promise(resolve => chrome.storage.managed.get(prefs
 document.getElementById('save').addEventListener('click', () => {
   const perform = () => chrome.storage.local.set({
     'text': document.getElementById('text').checked,
-    'counter': document.getElementById('counter').checked,
     'color': document.getElementById('color').value,
     'faqs': document.getElementById('faqs').checked,
     'startup-proxy': document.getElementById('startup-proxy').value,
@@ -29,7 +28,6 @@ document.getElementById('save').addEventListener('click', () => {
 document.addEventListener('DOMContentLoaded', () => {
   storage({
     'text': false,
-    'counter': false,
     'color': '#666666',
     'faqs': true,
     'startup-proxy': 'no',

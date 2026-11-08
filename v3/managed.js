@@ -2,7 +2,6 @@
 {
   const ALLOWED = new Set([
     'text',
-    'counter',
     'color',
     'faqs',
     'startup-proxy',
