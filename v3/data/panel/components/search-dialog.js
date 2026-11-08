@@ -816,6 +816,16 @@ class SearchDialog extends HTMLElement {
         }
       }
       catch (e) {}
+      // The final set() (or any restore) fired onChange while searching was
+      // 'true', so proxy.js update() swallowed it and the panel never
+      // re-synced (e.g. the selected tab stayed off Manual after a
+      // successful search). Re-sync once now that the guard is cleared.
+      try {
+        if (typeof globalThis !== 'undefined' && typeof globalThis.update === 'function') {
+          globalThis.update();
+        }
+      }
+      catch (e) {}
       this._disconnectGuard();
       this._running = false;
       this._updateToggle();

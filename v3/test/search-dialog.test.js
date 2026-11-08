@@ -131,6 +131,9 @@ function createHarness({
   const events = [];
   const setCalls = [];
   const ports = [];
+  // proxy.js update() replay: records dataset.searching at call time, so a
+  // test can assert the re-sync only happens once the flag is cleared.
+  const updateCalls = [];
   const original = {mode: 'fixed_servers', rules: {proxyForHttp: {host: '9.9.9.9', port: 8080, scheme: 'http'}}};
 
   const windowHost = makeListenerHost();
@@ -244,6 +247,7 @@ function createHarness({
     fetch: fetchMock,
     window: fakeWindow,
     document: fakeDocument,
+    update() { updateCalls.push(fakeDocument.body.dataset.searching); },
     HTMLElement: MockHTMLElement,
     customElements: fakeCustomElements,
     setTimeout,
@@ -272,7 +276,7 @@ function createHarness({
     el, dialog, consentDialog, consentTarget, consentApplyBtn, consentFindBtn, consentAbortBtn,
     logEl, toggleBtn, closeBtn, fakeDocument,
     cancelBtn: toggleBtn, confirmBtn: consentApplyBtn, applyBtn: consentApplyBtn,
-    setCalls, events, original, window: fakeWindow, ports,
+    setCalls, events, original, window: fakeWindow, ports, updateCalls,
     get port() { return ports[ports.length - 1] || null; },
     logText: () => logEl.textContent,
     candidate(host) {
@@ -538,6 +542,21 @@ describe('search-dialog component', () => {
     await harness.waitFor(() => harness.consentDialog.open === true, 8000);
     harness.toggleBtn.click();
     await started;
+    assert.equal(harness.fakeDocument.body.dataset.searching, 'false');
+  });
+
+  it('re-syncs the panel once after the searching flag is cleared', async () => {
+    const harness = createHarness({proxifly: ['1.2.3.4:1080'], monosans: [], outcomeByHost: {'1.2.3.4': 'success'}});
+    const started = harness.el.start();
+    await harness.waitFor(() => harness.consentDialog.open === true, 8000);
+    harness.consentApplyBtn.click();
+    const result = await started;
+    assert.ok(result, 'apply should resolve with the valid proxy');
+    // proxy.js update() is the panel re-sync (proxy-changed -> tab switch to
+    // Manual). It must run exactly in the finally, after the flag is
+    // cleared, not during the search where the guard would swallow it.
+    assert.equal(harness.updateCalls.length, 1, 'update() should be replayed once after search');
+    assert.equal(harness.updateCalls[0], 'false', 'update() must run after dataset.searching is cleared');
     assert.equal(harness.fakeDocument.body.dataset.searching, 'false');
   });
 
