@@ -162,63 +162,70 @@ class ManualView extends HTMLElement {
     });
   }
   update(profile, name) {
+    profile = profile || {};
     if (name) {
       this.name = name;
       this.active = name;
       this.shadowRoot.getElementById('selector').value = name;
     }
 
-    const rules = profile.rules;
+    const rules = profile.rules || {};
 
     if (rules.fallbackProxy) {
-      this.shadowRoot.getElementById('fallback-host').value = rules.fallbackProxy.host;
-      this.shadowRoot.getElementById('fallback-port').value = rules.fallbackProxy.port;
+      this.shadowRoot.getElementById('fallback-host').value = rules.fallbackProxy.host || '';
+      this.shadowRoot.getElementById('fallback-port').value = rules.fallbackProxy.port || '';
     }
     else {
       this.shadowRoot.getElementById('fallback-host').value =
       this.shadowRoot.getElementById('fallback-port').value = '';
     }
     if (rules.proxyForHttp) {
-      this.shadowRoot.getElementById('http-host').value = rules.proxyForHttp.host;
-      this.shadowRoot.getElementById('http-port').value = rules.proxyForHttp.port;
+      this.shadowRoot.getElementById('http-host').value = rules.proxyForHttp.host || '';
+      this.shadowRoot.getElementById('http-port').value = rules.proxyForHttp.port || '';
     }
     else {
       this.shadowRoot.getElementById('http-host').value =
       this.shadowRoot.getElementById('http-port').value = '';
     }
     if (rules.proxyForHttps) {
-      this.shadowRoot.getElementById('ssl-host').value = rules.proxyForHttps.host;
-      this.shadowRoot.getElementById('ssl-port').value = rules.proxyForHttps.port;
+      this.shadowRoot.getElementById('ssl-host').value = rules.proxyForHttps.host || '';
+      this.shadowRoot.getElementById('ssl-port').value = rules.proxyForHttps.port || '';
     }
     else {
       this.shadowRoot.getElementById('ssl-host').value =
       this.shadowRoot.getElementById('ssl-port').value = '';
     }
     if (rules.proxyForFtp) {
-      this.shadowRoot.getElementById('ftp-host').value = rules.proxyForFtp.host;
-      this.shadowRoot.getElementById('ftp-port').value = rules.proxyForFtp.port;
+      this.shadowRoot.getElementById('ftp-host').value = rules.proxyForFtp.host || '';
+      this.shadowRoot.getElementById('ftp-port').value = rules.proxyForFtp.port || '';
     }
     else {
       this.shadowRoot.getElementById('ftp-host').value =
       this.shadowRoot.getElementById('ftp-port').value = '';
     }
     this.shadowRoot.getElementById('bypass-list').value =
-      profile.rules.bypassList ? profile.rules.bypassList.join(', ') : '';
+      Array.isArray(rules.bypassList) ? rules.bypassList.join(', ') : '';
 
     this.shadowRoot.getElementById('remote-dns').checked = profile.remoteDNS;
     this.shadowRoot.getElementById('no-prompt').checked = profile.noPrompt;
 
-    const scheme = Object.keys(profile.rules)
+    const rawScheme = Object.keys(rules)
       .filter(s => ['proxyForHttp', 'proxyForHttps', 'proxyForFtp', 'fallbackProxy'].indexOf(s) !== -1)
       .sort()
       .reverse()
-      .reduce((p, c) => p || profile.rules[c].scheme, '') || 'http';
+      .reduce((p, c) => p || (rules[c] && typeof rules[c].scheme === 'string' ? rules[c].scheme : ''), '');
+    // Only schemes that have a radio in the template can be selected; anything
+    // else (e.g. 'quic', unknown/legacy values) falls back to 'http'. Checking
+    // against an allowlist also keeps untrusted values out of the selector below.
+    const scheme = ['http', 'https', 'socks4', 'socks5'].indexOf(rawScheme) !== -1 ? rawScheme : 'http';
 
     const s = this.shadowRoot.querySelector(`.type [value="${scheme}"]`);
-    s.checked = true;
-    s.dispatchEvent(new Event('change', {
-      bubbles: true
-    }));
+    if (s) {
+      s.checked = true;
+      s.dispatchEvent(new Event('change', {
+        bubbles: true
+      }));
+    }
 
     // update states
     this.reset();
@@ -289,7 +296,7 @@ class ManualView extends HTMLElement {
     });
     // on change
     this.shadowRoot.querySelector('.type').addEventListener('change', () => {
-      const scheme = this.shadowRoot.querySelector('.type :checked').value;
+      const scheme = this.shadowRoot.querySelector('.type :checked')?.value || 'http';
       if (!scheme.startsWith('socks')) {
         this.shadowRoot.getElementById('remote-dns').checked = false;
       }
@@ -405,7 +412,7 @@ class ManualView extends HTMLElement {
     });
   }
   get scheme() {
-    return this.shadowRoot.querySelector('.type :checked').value;
+    return this.shadowRoot.querySelector('.type :checked')?.value || 'http';
   }
   get values() {
     return {

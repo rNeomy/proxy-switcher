@@ -315,23 +315,38 @@ class PacView extends HTMLElement {
   set(mode, value, select = false) {
     if (mode === 'href') {
       const href = this.shadowRoot.getElementById('href');
+      if (!href) {
+        return;
+      }
       href.dataset.value = href.value = value;
       if (select) {
-        this.shadowRoot.getElementById('pac-1').checked = true;
+        const pac1 = this.shadowRoot.getElementById('pac-1');
+        if (pac1) {
+          pac1.checked = true;
+        }
         href.focus();
       }
       href.dispatchEvent(new Event('keyup'));
     }
     else if (mode === 'script') {
       const editor = this.shadowRoot.getElementById('editor');
+      if (!editor) {
+        return;
+      }
       editor.value = value;
       clearTimeout(editor.timeout); // prevent editor from saving
       if (select) {
         if (this.inlineDisabled) {
-          this.shadowRoot.getElementById('pac-1').checked = true;
+          const pac1 = this.shadowRoot.getElementById('pac-1');
+          if (pac1) {
+            pac1.checked = true;
+          }
         }
         else {
-          this.shadowRoot.getElementById('pac-2').checked = true;
+          const pac2 = this.shadowRoot.getElementById('pac-2');
+          if (pac2) {
+            pac2.checked = true;
+          }
           editor.focus();
         }
       }
@@ -339,14 +354,14 @@ class PacView extends HTMLElement {
     }
   }
   get mode() {
-    return this.shadowRoot.querySelector('[name="pac"]:checked').value;
+    return this.shadowRoot.querySelector('[name="pac"]:checked')?.value || 'href';
   }
   get(mode) {
     if (mode === 'href') {
-      return this.shadowRoot.getElementById('href').value || 'http://example.com/sample.pac';
+      return this.shadowRoot.getElementById('href')?.value || 'http://example.com/sample.pac';
     }
     else if (mode === 'script') {
-      return this.shadowRoot.getElementById('editor').value;
+      return this.shadowRoot.getElementById('editor')?.value;
     }
   }
 }
