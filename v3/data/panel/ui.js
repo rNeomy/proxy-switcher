@@ -27,13 +27,16 @@ app.storage({
 });
 
 const click = ({target, isTrusted}) => {
-  if (document.body.dataset.blocked === 'true') {
+  if (!target || document.body.dataset.blocked === 'true') {
     return;
   }
   // select radio buttons on focus
   const id = target.getAttribute('for');
   if (id) {
     const elem = document.getElementById(id);
+    if (!elem) {
+      return;
+    }
     elem.checked = true;
     if (elem.dataset.mode) {
       app.emit('change-proxy', elem.dataset.mode);
@@ -49,10 +52,16 @@ document.addEventListener('click', click);
 
 app.on('proxy-changed', mode => {
   const tab = document.querySelector(`#tabs [data-mode="${mode}"]`);
+  if (!tab) {
+    return;
+  }
   const open = tab.dataset.open;
 
   if (open) {
     const body = document.getElementById(open);
+    if (!body) {
+      return;
+    }
     [...document.querySelectorAll('.body')].filter(b => b !== body)
       .forEach(b => b.classList.add('hide'));
     body.classList.remove('hide');
@@ -78,7 +87,7 @@ document.addEventListener('keydown', e => {
     if (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3' || e.code === 'Digit4' || e.code === 'Digit5') {
       e.preventDefault();
       click({
-        target: document.querySelector(`#tabs label:nth-child(${e.key}) li`),
+        target: document.querySelector(`#tabs label:nth-child(${e.code.slice(-1)}) li`),
         isTrusted: true
       });
     }

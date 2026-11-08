@@ -16,7 +16,15 @@ chrome.proxy.settings.set = new Proxy(chrome.proxy.settings.set, {
 
 function update(callback = function() {}, store = true) {
   const _ = chrome.i18n.getMessage;
-  chrome.proxy.settings.get({}, ({value, levelOfControl}) => {
+  chrome.proxy.settings.get({}, result => {
+    if (!result || !result.value || !result.value.mode) {
+      const lastError = chrome.runtime.lastError;
+      if (lastError) {
+        app.emit('notify', lastError.message);
+      }
+      return;
+    }
+    const {value, levelOfControl} = result;
     app.emit('proxy-changed', value.mode);
     app.emit('proxy-controlled', levelOfControl);
 
@@ -84,7 +92,7 @@ update((mode, config) => {
     () => { // pac_script
       const pac = document.querySelector('pac-view');
       if (mode === 'pac_script') {
-        if (config.value.pacScript.url) {
+        if (config.value.pacScript?.url) {
           pac.set('href', config.value.pacScript.url, true);
           return app.storage({
             'script': false
@@ -94,7 +102,7 @@ update((mode, config) => {
             }
           });
         }
-        else if (config.value.pacScript.data) {
+        else if (config.value.pacScript?.data) {
           pac.set('script', config.value.pacScript.data, true);
           return app.storage({
             'last-pac': false
@@ -217,13 +225,12 @@ app.on('change-proxy', async mode => {
       const lastError = chrome.runtime.lastError;
       if (lastError) {
         app.emit('notify', lastError.message);
-        app.emit('proxy-changed', mode);
+        update();
       }
       else {
         update(m => {
           if (m !== mode) {
             app.emit('notify', 'Cannot set this proxy type!');
-            app.emit('proxy-changed', mode);
           }
         });
       }
@@ -232,8 +239,8 @@ app.on('change-proxy', async mode => {
   catch (e) {
     console.error(e);
     app.emit('notify', e.message || e);
-    // change tab if necessary
-    app.emit('proxy-changed', mode);
+    // re-read actual mode (change tab if necessary)
+    update();
   }
 });
 
