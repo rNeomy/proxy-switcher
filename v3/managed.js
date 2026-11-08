@@ -4,7 +4,6 @@
     'text',
     'counter',
     'color',
-    'validate-mode',
     'faqs',
     'startup-proxy',
     'color-auto_detect',
