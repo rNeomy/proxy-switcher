@@ -22,7 +22,6 @@ document.getElementById('save').addEventListener('click', () => {
     'color-system': document.getElementById('color-system').value
   }, () => {
     toast.textContent = 'Options saved.';
-    chrome.runtime.getBackgroundPage(bg => bg.chrome.proxy.settings.get({}, bg.icon));
     setTimeout(() => toast.textContent = '', 750);
   });
   perform();
