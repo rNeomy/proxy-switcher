@@ -19,7 +19,25 @@
     "default_popup": "data/panel/index.html"
   },
   "background": {
-    "service_worker": "worker.js"
+    "service_worker": "worker.js",
+    "scripts": [
+      "firefox.js",
+      "data/panel/utils.js",
+      "managed.js",
+      "worker.js"
+    ]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "proxy-switcher@webextension.org",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
   },
   "homepage_url": "https://webextension.org/listing/proxy-switcher.html",
   "icons": {

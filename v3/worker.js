@@ -1,6 +1,7 @@
 /* global app */
 
 if (typeof importScripts !== 'undefined') {
+  self.importScripts('/firefox.js');
   self.importScripts('/data/panel/utils.js');
   self.importScripts('/managed.js');
 }

@@ -4,10 +4,13 @@
 chrome.proxy.settings.set = new Proxy(chrome.proxy.settings.set, {
   apply(target, self, args) {
     const config = args[0];
-    delete config.value.remoteDNS;
-    delete config.value.noPrompt;
+    // Chrome strips unknown fields; the Firefox polyfill needs them for translation.
+    if (!(chrome.proxy && chrome.proxy.__isFirefoxPolyfill)) {
+      delete config.value.remoteDNS;
+      delete config.value.noPrompt;
+    }
 
-    Reflect.apply(target, self, args);
+    return Reflect.apply(target, self, args);
   }
 });
 

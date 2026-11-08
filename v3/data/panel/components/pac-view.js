@@ -105,7 +105,7 @@ class PacView extends HTMLElement {
         <form class="one" id="href-container">
           <input type="text" id="href" placeholder="http://example.com/sample.pac" for="pac-1" list="pacs" autocomplete="off" data-value="" value="">
           <input type="button" id="reload" data-cmd="reload-pac" value="Reload" title="Force browser to read script from server" accesskey="r">
-          <input type="button" id="convert" data-cmd="convert-to-script" value="convert" title="Convert server to inline PAC script. Use if server is unstable or address may change." accesskey="c">
+          <input type="button" id="convert" class="chrome" data-cmd="convert-to-script" value="convert" title="Convert server to inline PAC script. Use if server is unstable or address may change." accesskey="c">
           <input type="button" id="remove" disabled="true" data-cmd="delete-pac">
           <input type="submit" id="apply" disabled="true" value="">
         </form>
@@ -116,9 +116,7 @@ class PacView extends HTMLElement {
     `;
   }
   connectedCallback() {
-    if (/Firefox/.test(navigator.userAgent)) {
-      [...this.shadowRoot.querySelectorAll('.chrome')].forEach(e => e.classList.add('disabled'));
-    }
+    this.setInlineSupported(!(/Firefox/.test(navigator.userAgent) || (typeof chrome !== 'undefined' && chrome.proxy && chrome.proxy.__isFirefoxPolyfill)));
 
     const editor = this.shadowRoot.getElementById('editor');
     editor.value = SAMPLE;
@@ -196,6 +194,15 @@ class PacView extends HTMLElement {
 
     this.build();
   }
+  setInlineSupported(supported) {
+    this.inlineDisabled = !supported;
+    this.shadowRoot.querySelectorAll('.chrome').forEach(el => {
+      el.classList.toggle('disabled', !supported);
+      if ('disabled' in el) {
+        el.disabled = !supported;
+      }
+    });
+  }
   build() {
     const pacs = this.shadowRoot.getElementById('pacs');
 
@@ -212,6 +219,10 @@ class PacView extends HTMLElement {
     });
   }
   async convert() {
+    if (this.inlineDisabled) {
+      app.emit('notify', 'Inline PAC script is not supported in Firefox');
+      return;
+    }
     try {
       const href = this.shadowRoot.getElementById('href');
       const pac = href.value;
@@ -240,6 +251,10 @@ class PacView extends HTMLElement {
       href.dataset.value = pac;
 
       if (pac.startsWith('file:///')) {
+        if (this.inlineDisabled) {
+          app.emit('notify', 'Inline PAC script is not supported in Firefox');
+          return;
+        }
         await chrome.permissions.request({
           origins: [pac]
         });
@@ -312,8 +327,13 @@ class PacView extends HTMLElement {
       editor.value = value;
       clearTimeout(editor.timeout); // prevent editor from saving
       if (select) {
-        this.shadowRoot.getElementById('pac-2').checked = true;
-        editor.focus();
+        if (this.inlineDisabled) {
+          this.shadowRoot.getElementById('pac-1').checked = true;
+        }
+        else {
+          this.shadowRoot.getElementById('pac-2').checked = true;
+          editor.focus();
+        }
       }
       editor.dispatchEvent(new Event('keyup'));
     }
