@@ -79,23 +79,50 @@ document.getElementById('import').addEventListener('click', () => {
   function readFile() {
     if (fileInput.value !== fileInput.initialValue) {
       const file = fileInput.files[0];
+      if (!file) {
+        fileInput.remove();
+        return;
+      }
       if (file.size > 100e6) {
         console.warn('100MB backup? I don\'t believe you.');
+        fileInput.remove();
         return;
       }
       const fReader = new FileReader();
+      const cleanup = () => fileInput.remove();
+      fReader.onerror = fReader.onabort = cleanup;
       fReader.onloadend = event => {
-        fileInput.remove();
-        const json = JSON.parse(event.target.result);
+        cleanup();
+        let json;
+        try {
+          json = JSON.parse(event.target.result);
+        }
+        catch (e) {
+          console.error(e);
+          toast.textContent = 'Import failed: invalid JSON.';
+          setTimeout(() => toast.textContent = '', 3000);
+          return;
+        }
+        if (typeof json !== 'object' || json === null || Array.isArray(json)) {
+          toast.textContent = 'Import failed: invalid JSON.';
+          setTimeout(() => toast.textContent = '', 3000);
+          return;
+        }
         chrome.storage.local.set(json, () => chrome.runtime.reload());
       };
       fReader.readAsText(file, 'utf-8');
+    }
+    else {
+      fileInput.remove();
     }
   }
 });
 
 // reset
 document.getElementById('reset').addEventListener('click', e => {
+  if (e.detail === 0) {
+    return;
+  }
   if (e.detail === 1) {
     toast.textContent = 'Double-click to reset!';
     window.setTimeout(() => toast.textContent = '', 750);
