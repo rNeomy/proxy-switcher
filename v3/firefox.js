@@ -778,8 +778,27 @@
         const firefoxValue = chromeToFirefox(details && details.value);
         const changed = await nativeSettings.set({value: firefoxValue});
         if (changed === false) {
-          // levelOfControl says we do not control the setting (locked or
-          // controlled by a higher-precedence extension).
+          // MDN: set() resolves false when the setting was not changed,
+          // which covers both "not controllable" (locked / lower
+          // precedence) and "already at the requested value" (no-op).
+          // Read back and compare in Chrome shape: if the current value
+          // already equals the requested one, treat it as success with
+          // the callback invoked after the native set resolved.
+          try {
+            const current = await nativeSettings.get({});
+            const currentChrome = firefoxToChrome(current && current.value);
+            const intendedChrome = firefoxToChrome(firefoxValue);
+            if (JSON.stringify(currentChrome) === JSON.stringify(intendedChrome)) {
+              clearLastError();
+              if (cb) {
+                cb();
+              }
+              return changed;
+            }
+          }
+          catch (e) {
+            // Read-back best-effort; fall through to the not-controllable error.
+          }
           throw new Error('Proxy setting is not controllable by this extension');
         }
         clearLastError();

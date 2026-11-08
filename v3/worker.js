@@ -13,7 +13,7 @@ const _ = chrome.i18n.getMessage;
 {
   let busy = false;
   let pending = null;
-  const draw = async (config) => {
+  const draw = async config => {
     try {
       let prefs = await chrome.storage.local.get(null);
       prefs = {
@@ -96,6 +96,8 @@ const _ = chrome.i18n.getMessage;
   };
 
   self.icon = async (config, reason) => {
+    console.log(config);
+
     pending = {config, reason};
     if (busy) {
       return;

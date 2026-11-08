@@ -144,14 +144,105 @@ search.convert = str => {
   };
 };
 
-search.ping = href => new Promise((resolve, reject) => {
-  const timer = setTimeout(reject, 5000, 'timeout');
-  fetch(href, {
-    method: 'HEAD'
-  }).then(resolve, reject).finally(() => clearTimeout(timer));
+search.PING_TIMEOUT_MS = 10000;
+search.isFirefox = () => !!(typeof chrome !== 'undefined' && chrome && chrome.proxy && chrome.proxy.__isFirefoxPolyfill);
+search.delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+search.proxyHosts = value => {
+  const out = [];
+  const rules = (value && value.rules) || {};
+  for (const key of ['singleProxy', 'proxyForHttp', 'proxyForHttps', 'proxyForFtp', 'fallbackProxy']) {
+    const server = rules[key];
+    if (server && server.host) {
+      out.push(String(server.host).toLowerCase());
+    }
+  }
+  return out;
+};
+search.getProxyValue = () => new Promise((resolve, reject) => {
+  try {
+    chrome.proxy.settings.get({}, result => {
+      const msg = getLastErrorMessage();
+      if (msg) {
+        reject(Error(msg));
+        return;
+      }
+      resolve((result && result.value) || null);
+    });
+  }
+  catch (e) {
+    reject(e);
+  }
 });
-search.verify = (proxy, logFn) => search.setProxy(proxy).then(() => {
-  const track = (href, label) => search.ping(href).then(
+// Firefox note: chrome.proxy.settings.set callback fires after the native
+// setting is written, but the network stack may still reuse pooled
+// connections from the previous proxy/direct state. Poll the read-back
+// until it reports the candidate, then settle briefly before pinging.
+search.settleAfterSet = async config => {
+  const rules = (config && config.value && config.value.rules) || {};
+  const expected = rules.proxyForHttp || rules.proxyForHttps || rules.proxyForFtp || rules.singleProxy || rules.fallbackProxy || null;
+  const expectedHost = expected && expected.host ? String(expected.host).toLowerCase() : null;
+  if (expectedHost) {
+    const deadline = Date.now() + 2500;
+    while (Date.now() < deadline) {
+      let matched = false;
+      try {
+        const value = await search.getProxyValue();
+        matched = search.proxyHosts(value).includes(expectedHost);
+      }
+      catch (e) {}
+      if (matched) {
+        break;
+      }
+      await search.delay(150);
+    }
+  }
+  await search.delay(800);
+};
+search.ping = (href, method) => new Promise((resolve, reject) => {
+  let controller = null;
+  if (typeof AbortController !== 'undefined') {
+    try {
+      controller = new AbortController();
+    }
+    catch (e) {}
+  }
+  const timer = setTimeout(() => {
+    try {
+      if (controller) {
+        controller.abort();
+      }
+    }
+    catch (e) {}
+    reject(Error('timeout'));
+  }, search.PING_TIMEOUT_MS || 10000);
+  // no-cors: verify is connectivity-only, opaque response suffices.
+  // 'cors' (default) fails on hosts without Access-Control-Allow-Origin,
+  // e.g. www.gstatic.com/generate_204, which Firefox reports with
+  // Status code: (null) even through a working proxy.
+  const options = {method: method || 'HEAD', mode: 'no-cors', cache: 'no-store'};
+  if (controller) {
+    options.signal = controller.signal;
+  }
+  try {
+    fetch(href, options).then(resolve, reject).finally(() => clearTimeout(timer));
+  }
+  catch (e) {
+    clearTimeout(timer);
+    reject(e);
+  }
+});
+search.verify = (proxy, logFn) => search.setProxy(proxy).then(async () => {
+  try {
+    if (search.isFirefox()) {
+      await search.settleAfterSet(proxy);
+    }
+  }
+  catch (e) {
+    if (logFn) {
+      logFn('settle after set failed (' + ((e && e.message) || e) + ')');
+    }
+  }
+  const track = (href, label, method) => search.ping(href, method).then(
     () => {
       if (logFn) logFn(label + ' ok');
       return true;
@@ -162,8 +253,8 @@ search.verify = (proxy, logFn) => search.setProxy(proxy).then(() => {
     }
   );
   return Promise.all([
-    track('https://raw.githubusercontent.com/rNeomy/proxy-switcher/master/LICENSE', 'ping LICENSE'),
-    track('https://raw.githubusercontent.com/rNeomy/proxy-switcher/master/README.md', 'ping README')
+    track('https://raw.githubusercontent.com/rNeomy/proxy-switcher/master/LICENSE', 'ping LICENSE', 'HEAD'),
+    track('https://www.gstatic.com/generate_204', 'ping Gstatic', 'GET')
   ]).then(results => {
     if (results.some(r => r)) {
       return;
