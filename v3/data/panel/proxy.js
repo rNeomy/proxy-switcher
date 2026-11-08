@@ -16,8 +16,9 @@ chrome.proxy.settings.set = new Proxy(chrome.proxy.settings.set, {
 
 function update(callback = function() {}, store = true) {
   const _ = chrome.i18n.getMessage;
-  chrome.proxy.settings.get({}, ({value}) => {
+  chrome.proxy.settings.get({}, ({value, levelOfControl}) => {
     app.emit('proxy-changed', value.mode);
+    app.emit('proxy-controlled', levelOfControl);
 
     callback(value.mode, {value});
     if (value.mode === 'fixed_servers') {
@@ -234,6 +235,10 @@ app.on('change-proxy', async mode => {
     // change tab if necessary
     app.emit('proxy-changed', mode);
   }
+});
+
+chrome.proxy.settings.onChange.addListener(() => {
+  update();
 });
 
 chrome.proxy.onProxyError.addListener(e => {

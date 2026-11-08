@@ -1,6 +1,15 @@
 /* global app */
 'use strict';
 
+// Blocking state: private-window access or another extension controlling the proxy.
+// Either blocks switching (overlay + click/keyboard guard).
+let privateBlocked = false;
+let controlledBlocked = false;
+function updateBlocked() {
+  const blocked = privateBlocked || controlledBlocked;
+  document.body.dataset.blocked = blocked;
+}
+
 // colors
 app.storage({
   'color-auto_detect': '#2124fc',
@@ -18,6 +27,9 @@ app.storage({
 });
 
 const click = ({target, isTrusted}) => {
+  if (document.body.dataset.blocked === 'true') {
+    return;
+  }
   // select radio buttons on focus
   const id = target.getAttribute('for');
   if (id) {
@@ -75,8 +87,14 @@ document.addEventListener('keydown', e => {
 
 if (/Firefox/.test(navigator.userAgent)) {
   chrome.extension.isAllowedIncognitoAccess(result => {
-    if (!result) {
-      document.getElementById('private').classList.remove('hide');
-    }
+    privateBlocked = !result;
+    document.getElementById('private').classList.toggle('hide', !privateBlocked);
+    updateBlocked();
   });
 }
+
+app.on('proxy-controlled', levelOfControl => {
+  controlledBlocked = (levelOfControl === 'controlled_by_other_extensions' || levelOfControl === 'not_controllable');
+  document.getElementById('controlled').classList.toggle('hide', !controlledBlocked);
+  updateBlocked();
+});

@@ -199,7 +199,8 @@ input[type=button]:disabled {
   border-color: #c5c5c5;
   opacity: 1.0;
 }
-#private {
+#private,
+#controlled {
   background-color: rgba(0, 0, 0, 0.8);
   color: #fff;
   position: absolute;
