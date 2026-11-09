@@ -194,8 +194,12 @@ proxy.pac = async () => {
   if (mode === 'href') {
     const href = document.querySelector('pac-view').get('href');
 
-    // this is for backup only. Conversion to pacScript is done inside the pac component
-    if (href.startsWith('file:///')) {
+    // this is for backup only. Conversion to pacScript is done inside
+    // the pac component. Chrome rejects file:// as a PAC URL, so the
+    // file is fetched and inlined; Firefox extensions cannot fetch
+    // file:// URLs, but Firefox's PAC loader accepts them natively,
+    // so the URL is passed through as-is there.
+    if (href.startsWith('file:///') && !(chrome.proxy && chrome.proxy.__isFirefoxPolyfill)) {
       const r = await fetch(href);
       if (!r.ok) {
         throw Error('Cannot read from local PAC address');

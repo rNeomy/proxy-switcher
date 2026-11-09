@@ -84,29 +84,48 @@ function createManualFake(Ctor) {
   return {fake, elements, radios};
 }
 
-function loadPac() {
+function loadPac(options = {}) {
   let code = fs.readFileSync(path.join(__dirname, '../data/panel/components/pac-view.js'), 'utf8');
   code = code.replace(/^import .*$/m, '');
   let captured = null;
-  const calls = {emit: [], storageSet: []};
+  const calls = {emit: [], storageSet: [], permissionRequests: [], fetches: []};
   const context = {
     console,
     clearTimeout,
     setTimeout,
-    navigator: {userAgent: ''},
+    navigator: {userAgent: options.userAgent || ''},
     document: {
-      createElement: () => ({})
+      createElement: () => ({appendChild() {}})
     },
     app: {
       emit: (...args) => calls.emit.push(args),
       storage: defaults => Promise.resolve(defaults || {})
     },
     chrome: {
+      proxy: options.firefox ? {__isFirefoxPolyfill: true} : undefined,
+      permissions: {
+        request: async ({origins}) => {
+          calls.permissionRequests.push(origins);
+          return options.granted !== false;
+        }
+      },
       storage: {
         local: {
-          set: obj => calls.storageSet.push(obj)
+          set: (obj, cb) => {
+            calls.storageSet.push(obj);
+            if (typeof cb === 'function') {
+              cb();
+            }
+          }
         }
       }
+    },
+    fetch: async url => {
+      calls.fetches.push(url);
+      return {
+        ok: options.fetchOk !== false,
+        text: async () => options.fetchText || 'function FindProxyForURL(url, host) { return "DIRECT"; }'
+      };
     },
     HTMLElement: class {},
     Event: class {
@@ -380,5 +399,180 @@ describe('pac-view apply changes button', () => {
     editor.value = editor.dataset.value;
     changeHandler();
     assert.equal(btn.disabled, true);
+  });
+});
+
+describe('pac-view Firefox inline + file:// support', () => {
+  const FFM_UA = 'Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0';
+  const flush = () => new Promise(resolve => setImmediate(resolve));
+
+  it('in Firefox, file:// apply passes the URL through without fetching', async () => {
+    const Ctor = loadPac({
+      userAgent: FFM_UA,
+      firefox: true,
+      fetchText: 'function FindProxyForURL(url, host) { return "PROXY 10.0.0.1:8080"; }'
+    });
+    const {fake, elements} = createPacFake(Ctor);
+    const href = fake.shadowRoot.getElementById('href');
+    href.value = 'file:///Users/me/.firefox.pac';
+    await fake.apply();
+    await flush();
+    // Firefox extensions cannot fetch file:// URLs; the PAC loader
+    // consumes the URL directly, so no permission or fetch happens.
+    assert.deepEqual(Ctor.testCalls.permissionRequests, []);
+    assert.deepEqual(Ctor.testCalls.fetches, []);
+    assert.equal(elements['editor'].value, '');
+    assert.ok(!elements['pac-2'] || !elements['pac-2'].checked);
+    const lastPacSet = Ctor.testCalls.storageSet.find(s => s['last-pac']);
+    assert.ok(lastPacSet, 'last-pac should be stored');
+    assert.equal(lastPacSet['last-pac'], 'file:///Users/me/.firefox.pac');
+    assert.equal(lastPacSet['pac-type'], 'url');
+    assert.ok(Ctor.testCalls.emit.some(([name, val]) => name === 'change-proxy' && val === 'pac_script'));
+    assert.ok(!Ctor.testCalls.emit.some(([name]) => name === 'notify'));
+  });
+
+  it('in Chrome, file:// apply fetches the file and applies it inline', async () => {
+    const Ctor = loadPac({
+      fetchText: 'function FindProxyForURL(url, host) { return "PROXY 10.0.0.1:8080"; }'
+    });
+    const {fake, elements} = createPacFake(Ctor);
+    const href = fake.shadowRoot.getElementById('href');
+    href.value = 'file:///Users/me/.firefox.pac';
+    await fake.apply();
+    await flush();
+    assert.equal(Ctor.testCalls.permissionRequests.length, 1);
+    assert.equal(Ctor.testCalls.permissionRequests[0][0], 'file:///Users/me/.firefox.pac');
+    assert.deepEqual(Ctor.testCalls.fetches, ['file:///Users/me/.firefox.pac']);
+    assert.equal(elements['editor'].value, 'function FindProxyForURL(url, host) { return "PROXY 10.0.0.1:8080"; }');
+    assert.equal(elements['pac-2'].checked, true);
+    const lastPacSet = Ctor.testCalls.storageSet.find(s => s['last-pac']);
+    assert.ok(lastPacSet, 'last-pac should be stored');
+    assert.equal(lastPacSet['last-pac'], 'file:///Users/me/.firefox.pac');
+    assert.equal(lastPacSet['pac-type'], 'data');
+    assert.ok(Ctor.testCalls.emit.some(([name, val]) => name === 'change-proxy' && val === 'pac_script'));
+  });
+
+  it('in Chrome, file:// apply with denied permission notifies and does not apply', async () => {
+    const Ctor = loadPac({granted: false});
+    const {fake} = createPacFake(Ctor);
+    const href = fake.shadowRoot.getElementById('href');
+    href.value = 'file:///Users/me/.firefox.pac';
+    await fake.apply();
+    await flush();
+    assert.ok(Ctor.testCalls.emit.some(([name, msg]) => name === 'notify' && String(msg) === 'Permission denied'));
+    assert.ok(!Ctor.testCalls.emit.some(([name]) => name === 'change-proxy'));
+    assert.ok(!Ctor.testCalls.storageSet.some(s => s['last-pac']));
+  });
+
+  it('in Firefox, convert fetches an http PAC and switches to inline', async () => {
+    const Ctor = loadPac({
+      userAgent: FFM_UA,
+      firefox: true,
+      fetchText: 'function FindProxyForURL(url, host) { return "DIRECT"; }'
+    });
+    const {fake, elements} = createPacFake(Ctor);
+    const href = fake.shadowRoot.getElementById('href');
+    href.value = 'http://example.com/proxy.pac';
+    await fake.convert();
+    await flush();
+    assert.deepEqual(Ctor.testCalls.fetches, ['http://example.com/proxy.pac']);
+    assert.equal(elements['editor'].value, 'function FindProxyForURL(url, host) { return "DIRECT"; }');
+    assert.equal(elements['pac-2'].checked, true);
+    assert.ok(!Ctor.testCalls.emit.some(([name]) => name === 'notify'));
+  });
+
+  it('set(script, select) selects inline in Firefox', () => {
+    const Ctor = loadPac({userAgent: FFM_UA, firefox: true});
+    const {fake, elements} = createPacFake(Ctor);
+    fake.set('script', 'function FindProxyForURL() {}', true);
+    assert.equal(elements['pac-2'].checked, true);
+    assert.ok(!elements['pac-1'] || !elements['pac-1'].checked);
+  });
+
+  it('in Firefox, reload for file:// uses the dummy swap without fetching', async () => {
+    const Ctor = loadPac({
+      userAgent: FFM_UA,
+      firefox: true,
+      fetchText: 'function FindProxyForURL(url, host) { return "PROXY 10.0.0.2:8080"; }'
+    });
+    const {fake, elements} = createPacFake(Ctor);
+    const href = fake.shadowRoot.getElementById('href');
+    href.value = 'file:///Users/me/.firefox.pac';
+    elements['editor'].value = 'old script';
+    await fake.reload();
+    await flush();
+    // No fetch in Firefox; the dummy swap forces the PAC loader to
+    // re-read the file, and the field is restored afterwards.
+    assert.deepEqual(Ctor.testCalls.fetches, []);
+    assert.deepEqual(Ctor.testCalls.permissionRequests, []);
+    assert.equal(elements['editor'].value, 'old script');
+    assert.equal(href.value, 'file:///Users/me/.firefox.pac');
+    assert.equal(Ctor.testCalls.emit.filter(([name]) => name === 'change-proxy').length, 2);
+  });
+
+  it('in Chrome, reload for file:// re-reads the file and never leaves dummy.pac', async () => {
+    const Ctor = loadPac({
+      fetchText: 'function FindProxyForURL(url, host) { return "PROXY 10.0.0.2:8080"; }'
+    });
+    const {fake, elements} = createPacFake(Ctor);
+    const href = fake.shadowRoot.getElementById('href');
+    href.value = 'file:///Users/me/.firefox.pac';
+    elements['editor'].value = 'old script';
+    await fake.reload();
+    await flush();
+    assert.deepEqual(Ctor.testCalls.fetches, ['file:///Users/me/.firefox.pac']);
+    assert.equal(elements['editor'].value, 'function FindProxyForURL(url, host) { return "PROXY 10.0.0.2:8080"; }');
+    assert.equal(href.value, 'file:///Users/me/.firefox.pac');
+    assert.equal(Ctor.testCalls.emit.filter(([name]) => name === 'change-proxy').length, 1);
+  });
+
+  it('in Firefox, convert with a file:// URL does not fetch', async () => {
+    const Ctor = loadPac({userAgent: FFM_UA, firefox: true});
+    const {fake} = createPacFake(Ctor);
+    const href = fake.shadowRoot.getElementById('href');
+    href.value = 'file:///Users/me/.firefox.pac';
+    await fake.convert();
+    await flush();
+    assert.deepEqual(Ctor.testCalls.fetches, []);
+    assert.deepEqual(Ctor.testCalls.permissionRequests, []);
+    assert.ok(Ctor.testCalls.emit.some(([name, msg]) => name === 'notify' && String(msg).includes('loaded directly')));
+  });
+
+  it('reload for an http URL still uses the dummy cache-buster transiently', async () => {
+    const Ctor = loadPac({userAgent: FFM_UA, firefox: true});
+    const {fake} = createPacFake(Ctor);
+    const href = fake.shadowRoot.getElementById('href');
+    href.value = 'http://example.com/proxy.pac';
+    await fake.reload();
+    assert.equal(href.value, 'http://example.com/proxy.pac');
+    assert.equal(Ctor.testCalls.emit.filter(([name]) => name === 'change-proxy').length, 2);
+  });
+
+  it('pac tab layout fits the popup without scrolling', () => {
+    const pacCode = fs.readFileSync(path.join(__dirname, '../data/panel/components/pac-view.js'), 'utf8');
+    const panelCss = fs.readFileSync(path.join(__dirname, '../data/panel/index.css'), 'utf8');
+    // Horizontal: grid children must be able to shrink below intrinsic
+    // width so the URL row fits 600px in Firefox as well as Chrome.
+    assert.ok(pacCode.includes('min-width: 0'), 'pac grid children need min-width: 0');
+    assert.ok(panelCss.includes('box-sizing: border-box'), '.body needs border-box so padding fits 600px');
+    assert.ok(panelCss.includes('width: 600px'), 'body must keep its fixed popup width');
+    // vw/overflow guards collapse popup intrinsic sizing to min-content.
+    assert.ok(!panelCss.includes('max-width: 100vw'), 'body must not cap width by vw in a popup');
+    assert.ok(!panelCss.includes('overflow-x: hidden'), 'body must not hide overflow; it collapses popup width');
+    // Vertical: the editor must leave the whole popup under its max
+    // height; 300px pushed it over and caused a popup scrollbar.
+    assert.ok(!pacCode.includes('height: 300px'), 'editor height must fit the popup without scrolling');
+  });
+
+  it('reload for an inline script emits once without the dummy URL', async () => {
+    const Ctor = loadPac({userAgent: FFM_UA, firefox: true});
+    const {fake} = createPacFake(Ctor);
+    const href = fake.shadowRoot.getElementById('href');
+    href.value = 'http://example.com/proxy.pac';
+    fake.shadowRoot.querySelector = () => ({value: 'script'});
+    await fake.reload();
+    assert.equal(href.value, 'http://example.com/proxy.pac');
+    assert.equal(Ctor.testCalls.emit.filter(([name]) => name === 'change-proxy').length, 1);
+    assert.deepEqual(Ctor.testCalls.fetches, []);
   });
 });

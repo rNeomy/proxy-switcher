@@ -140,6 +140,7 @@ body[data-ready=true] #tabs li {
 .body {
   background-color: #fff;
   width: calc(100% - 20px);
+  box-sizing: border-box;
   flex: 1;
   z-index: 2;
   padding: 10px;

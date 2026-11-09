@@ -268,6 +268,16 @@ describe('firefox shim — large inline PAC guards', () => {
     assert.equal(value.pacScript.data, pac);
   });
 
+  it('file:// PAC URL passes through as autoConfigUrl and reads back as url', async () => {
+    const h = loadShim();
+    await h.set({mode: 'pac_script', pacScript: {url: 'file:///Users/me/.firefox.pac'}});
+    assert.equal(h.getNative().proxyType, 'autoConfig');
+    assert.equal(h.getNative().autoConfigUrl, 'file:///Users/me/.firefox.pac');
+    const value = await h.get();
+    assert.equal(value.pacScript.url, 'file:///Users/me/.firefox.pac');
+    assert.equal(value.pacScript.data, undefined);
+  });
+
   it('oversized data-URL on read falls back to url form, never raw url as data', async () => {
     const big = 'x'.repeat(70 * 1024);
     const url = 'data:application/x-ns-proxy-autoconfig,' + encodeURIComponent(big);

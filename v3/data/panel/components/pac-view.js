@@ -25,16 +25,26 @@ class PacView extends HTMLElement {
     });
     shadow.innerHTML = `
       <style>
+        p {
+          margin: 0 0 6px;
+        }
         .grid {
           display: grid;
           grid-template-columns: min-content 1fr;
-          white-space: nowrap;
           align-items: start;
           grid-gap: 10px;
+          min-width: 0;
+        }
+        .grid > * {
+          min-width: 0;
         }
         .one {
           display: grid;
           grid-template-columns: 1fr min-content min-content 40px 40px;
+          min-width: 0;
+        }
+        .one > * {
+          min-width: 0;
         }
         label {
           cursor: pointer;
@@ -45,6 +55,7 @@ class PacView extends HTMLElement {
         input[type=button] {
           padding: 8px 5px;
           border: none;
+          font: inherit;
         }
         input[type=text] {
           outline: none;
@@ -67,6 +78,9 @@ class PacView extends HTMLElement {
         }
         #href {
           background-color: #f0f0f0;
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
         }
         #convert {
           color: #fff;
@@ -89,6 +103,12 @@ class PacView extends HTMLElement {
           display: flex;
           flex-direction: column;
           gap: 6px;
+          min-width: 0;
+        }
+        editor-view {
+          display: block;
+          width: 100%;
+          min-width: 0;
         }
         #apply-script {
           color: #fff;
@@ -103,7 +123,10 @@ class PacView extends HTMLElement {
         #editor {
           background-color: #f0f0f0;
           overflow: auto;
-          height: 300px;
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+          height: 220px;
         }
         .disabled {
           opacity: 0.4;
@@ -130,8 +153,6 @@ class PacView extends HTMLElement {
     `;
   }
   connectedCallback() {
-    this.setInlineSupported(!(/Firefox/.test(navigator.userAgent) || (typeof chrome !== 'undefined' && chrome.proxy && chrome.proxy.__isFirefoxPolyfill)));
-
     const editor = this.shadowRoot.getElementById('editor');
     editor.value = SAMPLE;
     editor.dataset.value = SAMPLE;
@@ -205,15 +226,6 @@ class PacView extends HTMLElement {
 
     this.build();
   }
-  setInlineSupported(supported) {
-    this.inlineDisabled = !supported;
-    this.shadowRoot.querySelectorAll('.chrome').forEach(el => {
-      el.classList.toggle('disabled', !supported);
-      if ('disabled' in el) {
-        el.disabled = !supported;
-      }
-    });
-  }
   build() {
     const pacs = this.shadowRoot.getElementById('pacs');
 
@@ -229,26 +241,36 @@ class PacView extends HTMLElement {
       });
     });
   }
-  async convert() {
-    if (this.inlineDisabled) {
-      app.emit('notify', 'Inline PAC script is not supported in Firefox');
-      return;
+  isFirefox() {
+    return !!(typeof chrome !== 'undefined' && chrome.proxy && chrome.proxy.__isFirefoxPolyfill);
+  }
+  async fetchPacText(pac) {
+    const granted = await chrome.permissions.request({
+      origins: [pac]
+    });
+    if (!granted) {
+      throw Error('Permission denied');
     }
+    const r = await fetch(pac);
+    if (!r.ok) {
+      throw Error('Cannot access this resource');
+    }
+    return await r.text();
+  }
+  async convert() {
     try {
       const href = this.shadowRoot.getElementById('href');
       const pac = href.value;
 
-      const granted = await chrome.permissions.request({
-        origins: [pac]
-      });
-      if (!granted) {
-        throw Error('Permission denied');
+      // Firefox extensions cannot fetch file:// URLs (moz-extension
+      // pages may not load file:// data), and Firefox's PAC loader
+      // consumes the file:// URL directly — there is nothing to
+      // convert. Chrome can fetch it, so it stays on the inline path.
+      if (pac.startsWith('file:///') && this.isFirefox()) {
+        app.emit('notify', 'file:// PACs are loaded directly in Firefox; edit the file and use Reload');
+        return;
       }
-      const r = await fetch(pac);
-      if (!r.ok) {
-        throw Error('Cannot access this resource');
-      }
-      const pacScript = await r.text();
+      const pacScript = await this.fetchPacText(pac);
       this.set('script', pacScript, true);
       href.dataset.value = pac;
       this.shadowRoot.getElementById('pac-2').dispatchEvent(new Event('change'));
@@ -262,29 +284,25 @@ class PacView extends HTMLElement {
     try {
       const href = this.shadowRoot.getElementById('href');
       const pac = href.value;
+      let converted = false;
 
-      if (pac.startsWith('file:///')) {
-        if (this.inlineDisabled) {
-          app.emit('notify', 'Inline PAC script is not supported in Firefox');
-          return;
-        }
-        const granted = await chrome.permissions.request({
-          origins: [pac]
-        });
-        if (!granted) {
-          throw Error('Permission denied');
-        }
-        const r = await fetch(pac);
-        if (!r.ok) {
-          throw Error('Cannot access this resource');
-        }
-        const pacScript = await r.text();
+      // Chrome does not accept file:// as a PAC URL
+      // (ERR_DISALLOWED_URL_SCHEME), so fetch the local file and
+      // apply its contents as an inline script; no local web server
+      // is needed. Firefox extensions cannot fetch file:// URLs at
+      // all, but Firefox's PAC loader accepts file:// as an
+      // autoConfigUrl natively, so the URL is passed through as-is
+      // (converted stays false -> pac-type 'url').
+      if (pac.startsWith('file:///') && !this.isFirefox()) {
+        const pacScript = await this.fetchPacText(pac);
         this.set('script', pacScript, true);
+        converted = true;
       }
 
       href.dataset.value = pac;
       chrome.storage.local.set({
-        'last-pac': href.value
+        'last-pac': href.value,
+        'pac-type': converted ? 'data' : 'url'
       });
       app.storage({
         pacs: []
@@ -321,9 +339,35 @@ class PacView extends HTMLElement {
       }
     });
   }
-  reload() {
+  async reload() {
     const href = this.shadowRoot.getElementById('href');
     const url = href.value;
+
+    // In Chrome, file:/// PACs are applied as inline scripts (see
+    // apply()), so the dummy-URL cache-buster below would apply a
+    // nonexistent http URL and its onChange re-sync can clobber the
+    // field with dummy.pac. Re-read the file into the editor and
+    // apply it directly instead. In Firefox the file:// URL is
+    // loaded by the browser itself, so it falls through to the
+    // dummy swap, which forces Firefox to re-read the file.
+    if (url.startsWith('file:///') && !this.isFirefox()) {
+      try {
+        const pacScript = await this.fetchPacText(url);
+        this.set('script', pacScript, false);
+        app.emit('change-proxy', 'pac_script');
+      }
+      catch (e) {
+        console.error(e);
+        app.emit('notify', e.message);
+      }
+      return;
+    }
+    // Inline scripts are already in the editor; re-setting an
+    // unchanged script needs no cache-buster.
+    if (this.mode === 'script') {
+      app.emit('change-proxy', 'pac_script');
+      return;
+    }
     href.value = 'http://127.0.0.1:8888/dummy.pac';
     app.emit('change-proxy', 'pac_script');
     href.value = url;
@@ -342,7 +386,8 @@ class PacView extends HTMLElement {
     }
     app.emit('change-proxy', 'pac_script');
     chrome.storage.local.set({
-      'script': value
+      'script': value,
+      'pac-type': 'data'
     });
   }
   set(mode, value, select = false) {
@@ -373,19 +418,11 @@ class PacView extends HTMLElement {
         applyScriptBtn.disabled = true;
       }
       if (select) {
-        if (this.inlineDisabled) {
-          const pac1 = this.shadowRoot.getElementById('pac-1');
-          if (pac1) {
-            pac1.checked = true;
-          }
+        const pac2 = this.shadowRoot.getElementById('pac-2');
+        if (pac2) {
+          pac2.checked = true;
         }
-        else {
-          const pac2 = this.shadowRoot.getElementById('pac-2');
-          if (pac2) {
-            pac2.checked = true;
-          }
-          editor.focus();
-        }
+        editor.focus();
       }
       editor.dispatchEvent(new Event('keyup'));
     }
